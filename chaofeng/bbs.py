@@ -4,8 +4,9 @@ from chaofeng import ascii
 
 class GotoInterrupt(Exception):
     
-    def __init__(self,to_where):
+    def __init__(self,to_where,kwargs):
         self.to_where = to_where
+        self.kwargs = kwargs
 
 class EndInterrupt(Exception): pass
 
@@ -19,8 +20,6 @@ class Frame:
         self.session = session
         self.server = server
         self.sock = sock
-        self.initialize()
-        self.loop()
 
     def loop(self):
         while True :
@@ -43,10 +42,10 @@ class Frame:
             return data
             
     def write(self,data):
-        self.sock.send(data)
+        self.sock.send(data.encode('gbk'))
 
-    def goto(self,where):
-        raise GotoInterrupt(where)
+    def goto(self,where,**kwargs):
+        raise GotoInterrupt(where,kwargs)
 
     def close(self):
         self.clear()
@@ -71,12 +70,16 @@ class Server:
             session['ip'],session['port'] = sock.getpeername()
             sock.send(ascii.CMD_CHAR_PER)
             flag = True
+            kwargs = {}
             while flag:
                 try:
                     now = next_frame(self,sock,session)
+                    now.initialize(**kwargs)
+                    now.loop()
                     flag = False
                 except GotoInterrupt as e:
                     next_frame = e.to_where
+                    kwargs = e.kwargs
                 except EndInterrupt:
                     break
                 

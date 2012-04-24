@@ -5,6 +5,7 @@ class BaseUI:
 
     def __init__(self,frame,**kwarg):
         self.frame = frame
+        self.session = frame.session
 
     def fetch(self):
         pass
@@ -109,11 +110,12 @@ class Password(BaseUI):
             
 class Animation(BaseUI):
 
-    def __init__(self,frame,data):
+    def __init__(self,frame,data,start=0):
         BaseUI.__init__(self,frame)
         self.data = data
         self.len = len(self.data)
         self.select = -1
+        self.start = start
 
     def fetch(self):
         self.select += 1
@@ -125,10 +127,11 @@ class Animation(BaseUI):
         pass
 
     def read(self):
+        start = self.start
         try:
             while True :
                 data,time = self.fetch()
-                self.frame.write(data)
+                self.frame.write(move2(start,0)+data)
                 sleep(time)
         except None:
             print 'Alert'
