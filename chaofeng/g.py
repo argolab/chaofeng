@@ -3,6 +3,7 @@ from string import Template
 from os import walk as os_walk
 from os import path as os_path
 import re
+import codecs
 
 class Proxyer(dict):
     '''
@@ -48,7 +49,8 @@ class StaticProxyer(Proxyer):
     '''
     Load the static resouce.
     '''
-    def load(self,path='./static',file_map=None,encoding="utf8",mode="r"):
+    def load(self,path='./static/',file_map=None,encoding="utf8",mode="r"):
+        print '.'*20
         if file_map == None :
             file_map = f_map
         for root,dirs,files in os_walk(path):
@@ -59,6 +61,7 @@ class StaticProxyer(Proxyer):
                         self[name]=file_map[suf](f)
 
 static = StaticProxyer()
+static.load()
 
 def _(s):
     return s.encode('gbk')

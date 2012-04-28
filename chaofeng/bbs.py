@@ -63,7 +63,7 @@ class Server:
         self.max_connect = max_connect
         self.sessions = []
         
-    def run(self,load_static=True):
+    def run(self,load_static=False):
 
         root = self.root
         if load_static :
