@@ -1,5 +1,3 @@
-__metaclass__ = type
-
 from chaofeng.ascii import *
 from string import Template
 from os import walk as os_walk
@@ -22,10 +20,6 @@ mark = Proxyer()
 
 # Normal file map 
 f_map = Proxyer()
-
-@f_map('.seq')
-def load_seq(f):
-    return [ x[:-1] for x in f.readlines()]
 
 @f_map('.txt')
 def load_str(f):
