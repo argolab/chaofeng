@@ -1,27 +1,37 @@
 from chaofeng.ascii import *
 from string import Template
+from os import walk as os_walk
+from os import path as os_path
+import re
 
-STATIC_PATH = './static/'
+class Proxyer(dict):
+    '''
+    Dict callable , using to as decoration.
+    '''
+    def __call__(self,name):
+        def mark_inner(obj):
+            self[name] = obj
+            return obj
+        return mark_inner
 
-file_maps = {}
+# global dict of frame
+mark = Proxyer()
 
-def file_map(suf):
-    def fun_inner(frame):
-        global file_maps
-        file_maps[suf] = frame
-        return frame
-    return fun_inner
+# Normal file map 
+f_map = Proxyer()
 
-@file_map('.tpl')
+@f_map('.txt')
+def load_str(f):
+    return u'\r'.join(f.readlines())
+
+@f_map('.tpl')
 def load_templete(f):
     la = f.readlines()
     if '----\n' in la : la = la[la.index('----\n')+1:]
     txt = u'\r'.join(la)[:-1]
     return Template(move2(0,0)+clear+txt)
 
-import re
-
-@file_map('.ani')
+@f_map('.ani')
 def load_animation(f):
     buf = []
     v = []
@@ -34,34 +44,21 @@ def load_animation(f):
             buf.append(line)
     return v
 
-def load_static():
-    from os import walk
-    from os import path as os_path
-    import codecs
-    '''Load the file under static path as string.'''
-    path=STATIC_PATH
-    v = {}
-    global file_maps
-    for root,dirs,files in walk(path):
-        for filename in files :
-            (name,suf) = os_path.splitext(filename)
-            if suf in file_maps:
-                with codecs.open(path+filename,'r',encoding="utf8") as f : 
-                    v[name]=file_maps[suf](f)
-    return v
+class StaticProxyer(Proxyer):
+    '''
+    Load the static resouce.
+    '''
+    def load(self,path='./static',file_map=None,encoding="utf8",mode="r"):
+        if file_map == None :
+            file_map = f_map
+        for root,dirs,files in os_walk(path):
+            for filename in files :
+                (name,suf) = os_path.splitext(filename)
+                if suf in file_map:
+                    with codecs.open(path+filename,mode,encoding=encoding) as f :
+                        self[name]=file_map[suf](f)
 
-static = load_static()
-
-marks = {}
-
-def mark(name):
-    def mark_inner(frame):
-        global marks
-        marks[name] = frame
-        return frame
-    return mark_inner
-
-import config
+static = StaticProxyer()
 
 def _(s):
     return s.encode('gbk')

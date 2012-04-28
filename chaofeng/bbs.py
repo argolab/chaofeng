@@ -1,5 +1,8 @@
+__metaclass__ = type
+
 import eventlet
 from chaofeng import ascii
+from chaofeng.g import static
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 
 class GotoInterrupt(Exception):
@@ -60,9 +63,11 @@ class Server:
         self.max_connect = max_connect
         self.sessions = []
         
-    def run(self):
+    def run(self,load_static=True):
 
         root = self.root
+        if load_static :
+            static.load()
         
         def new_connect(sock,addr):
             next_frame = root

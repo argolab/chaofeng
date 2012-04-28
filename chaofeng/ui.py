@@ -21,15 +21,15 @@ class BaseUI:
         data = f.read()
         self.clear()
         while data not in termitor :
-            self.send(data)
+            if self.send(data) : break
             data = f.read()
         return self.fetch()
-             
-class NMenu(BaseUI):
 
-    def __init__(self,frame,data,default_ord=0):
+class ColMenu(BaseUI):
+
+    def __init__(self,frame,data,default_ord=0,height=None):
         '''
-        data = ( ((x,y),value,[keymap]),[...] )
+        data =  ( ((x,y),value,[keymap]),[...] )
         '''
         BaseUI.__init__(self,frame)
         self.data = data
@@ -37,6 +37,7 @@ class NMenu(BaseUI):
         self.frame = frame
         self.keymap = dict( (x[1][2],x[0]) for x in filter(lambda x:len(x[1])>2,enumerate(data)))
         self.frame.write(move2(*self.data[self.select][0])+'>')
+        self.height = height
 
     def fetch(self):
         return self.data[self.select][1]
@@ -50,6 +51,17 @@ class NMenu(BaseUI):
                 self.select -= 1
         elif data in self.keymap :
             self.select = self.keymap[data]
+        elif data == k_right :
+            if not self.height : return True
+            next_s = self.select + self.height
+            if next_s < len(self.data):
+                self.select = next_s
+            else :
+                return True
+        elif data == k_left :
+            next_s = self.select - self.height
+            if next_s >= 0 :
+                self.select = next_s
         else : return
         self.frame.write(backspace*2+move2(*self.data[self.select][0])+'>')
 
@@ -131,7 +143,7 @@ class Animation(BaseUI):
         try:
             while True :
                 data,time = self.fetch()
-                self.frame.write(move2(start,0)+data)
+                self.frame.write(save+move2(start,0)+data+restore)
                 sleep(time)
         except None:
             print 'Alert'
