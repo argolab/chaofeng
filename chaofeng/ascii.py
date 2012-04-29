@@ -137,6 +137,8 @@ CMD_LINEMODE = IAC+WONT+ECHO + IAC+WONT+SGA# + IAC+WILL+LINEMODE
 movex = lambda x : '\x1b[%d%c' % (abs(x),'D' if x<0 else 'C')
 movey = lambda y : '\x1b[%d%c' % (abs(y),'A' if y<0 else 'B')
 movey_1 = '\x1b[B'
+movey_p = '\x1b[A'
+movey_n = '\x1b[B'
 movex_f = '\x1b[C'
 movex_d = '\x1b[D'
 save =    '\x1b[s'
@@ -152,10 +154,18 @@ k_down = '\x1b[B'
 k_right = '\x1b[C'
 k_left = '\x1b[D'
 
+k_page_up = '\x1b[5~'
+k_page_down = '\x1b[6~'
+
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'
 k_c_h = '\x08'
+
+k_home = '\x1b[1~'
+k_end = '\x1b[4~'
+
+k_ctrl_p = lambda c : chr(ord(c)-96)
 
 k_del = chr(127)
 k_backspace = chr(8)
@@ -164,3 +174,5 @@ k_enter_linux = chr(13)
 k_enter_window = chr(10)
 
 backspace = k_left+ ' '+k_left
+
+kill_line = '\x1b[K'

@@ -43,6 +43,7 @@ class ColMenu(BaseUI):
             if item[1] : self.kmap[item[1]] = index
             if len(item) == 3 :
                 xx,yy = item[2]
+                height = index
             else : xx += 1
             self.pos.append((xx,yy))
         self.height = height
@@ -60,7 +61,7 @@ class ColMenu(BaseUI):
         elif data == k_right :
             if not self.height : return True
             next_s = self.s + self.height
-            if next_s <= len(self.a):
+            if next_s < len(self.a):
                 self.s = next_s
             else :
                 return True
@@ -73,33 +74,6 @@ class ColMenu(BaseUI):
             self.s = self.kmap[data]
         else : return
         self.frame.write(backspace*2+move2(*self.pos[self.s])+'>')
-
-# class ColMenu(BaseUI):
-
-#     def __init__(self,frame,data,default_ord=0,height=None):
-#         '''
-#         data =  ( ([(x,y)],value,keymap),[...] )
-#         '''
-#         BaseUI.__init__(self,frame)
-#         self.data = data
-#         self.select = default_ord
-#         self.frame = frame
-#         self.keymap = dict( (x[1][2],x[0]) for x in filter(lambda x:len(x[1])>2,enumerate(data)))
-#         self.frame.write(move2(*self.data[self.select][0])+'>')
-#         self.height = height
-
-#     def fetch(self):
-#         return self.data[self.select][1]
-
-#     def send(self,data):
-#         if data == k_down :
-#             if self.select+1 < len(self.data):
-#                 self.select += 1
-#         elif data == k_up :
-#             if self.select > 0 :
-#                 self.select -= 1
-#         elif data in self.keymap :
-#             self.select = self.keymap[data]
 
 class TextInput(BaseUI):
     
@@ -187,3 +161,80 @@ class Animation(BaseUI):
 
     def run_bg(self):
         launch(self.read)
+
+class Table(BaseUI):
+
+    kmap = {}
+    
+    def __init__(self,frame,format_str,line=0,data=[],default_ord=0,limit=20):
+        BaseUI.__init__(self,frame)
+        self.format = ' '+ format_str
+        self.hover = default_ord
+        self.limit = limit
+        self.line = line
+        self.data = data
+        self.refresh()
+
+    def fetch(self):
+        return self.hover
+
+    def send(self,data):
+        if data in self.kmap :
+            self.kmap[data](self)
+
+    def refresh(self):
+        buf = []
+        pos = self.hover % self.limit
+        start = self.hover - pos
+        l = len(self.data)
+        m = start + self.limit
+        for index in range(start,min(l,m)):
+            buf.append(self.format % self.data[index])
+        if l<m :
+            buf.extend([kill_line]*(m-l))
+        self.start = start
+        self.frame.write(move2(self.line,0))
+        self.frame.write(u'\r\n'.join(buf))
+        self.frame.write(move2(self.line+pos+1,0)+'>')
+            
+    def goto_last(self):
+        self.hover = len(self.data)-1
+        self.refresh()
+    kmap[k_end] = goto_last
+
+    def move_down(self):
+        if self.hover + 1 < len(self.data) :
+            self.hover += 1
+            if self.hover >= self.start + self.limit :
+                self.refresh()
+            else:
+                self.frame.write(backspace*2+movey_n+'\r>')
+    kmap[k_down] = move_down
+
+    def move_up(self):
+        if self.hover > 0 :
+            self.hover -= 1
+            if self.hover < self.start :
+                self.refresh()
+            else:
+                self.frame.write(backspace*2+movey_p+'\r>')
+    kmap[k_up] = move_up
+
+    def page_down(self):
+        self.hover += self.limit
+        l = len(self.data)
+        if self.hover >= l : self.hover = l-1
+        self.refresh()
+    kmap[k_page_down] = page_down
+
+    def page_up(self):
+        self.hover -= self.limit
+        if self.hover < 0 :
+            self.hover = 0
+        self.refresh()
+    kmap[k_page_up] = page_up
+
+    def goto_first(self):
+        self.hover = 0
+        self.refresh()
+    kmap[k_home] = goto_first
