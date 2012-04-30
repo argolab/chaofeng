@@ -1,0 +1,120 @@
+__metaclass__ = type
+
+import eventlet
+from chaofeng import ascii
+from chaofeng.g import static
+# from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
+
+class GotoInterrupt(Exception):
+    
+    def __init__(self,to_where,kwargs):
+        self.to_where = to_where
+        self.kwargs = kwargs
+
+class EndInterrupt(Exception): pass
+
+class Frame:
+
+    def __init__(self,server,sock,session):
+        self.session = session
+        self.server = server
+        self.sock = sock
+        self._subframe = []
+
+    def sub(self,subframe,*args,**kwargs):
+        t = subframe(self.server,self.sock,self.session)
+        t.initialize(*args,**kwargs)
+        t._father = self
+        self._subframe.append(t)
+        return t
+
+    def get(self,data):
+        pass
+
+    def initialize(self):
+        pass
+
+    def clear(self):
+        pass
+
+    def fetch(self):
+        pass
+
+    def loop(self):
+        while True :
+            self.read()
+
+    def read_until(self,termitor=['\r','\n','\r0']):
+        while True :
+            data = self.sock.recv(1024)
+            if not data : self.close()
+            elif data in termitor :
+                return self.fetch()
+            else:
+                self.get(data)
+                self._father.get(data)
+
+    def read(self,buffer_size=1024):
+        data = self.sock.recv(buffer_size)
+        if not data :
+            self.close()
+        else:
+            if self.get : self.get(data)
+            return data
+            
+    def write(self,data):
+        try:
+            self.sock.send(data.encode('gbk'))
+        except Exception,e:
+            print e
+            self.close()
+            
+    def goto(self,where,**kwargs):
+        for s in self._subframe : s.clear()
+        self.clear()
+        raise GotoInterrupt(where,kwargs)
+
+    def close(self):
+        for s in self._subframe : s.clear()
+        self.clear()
+        raise EndInterrupt
+
+class Server:
+
+    def __init__(self,root,host='0.0.0.0',port=5000,max_connect=5000):
+        self.sock  = eventlet.listen((host,port))
+        self._pool = eventlet.GreenPool(max_connect)
+        self.root  = root
+        self.max_connect = max_connect
+        self.sessions = []
+        
+    def run(self,load_static=False):
+
+        root = self.root
+        if load_static :
+            static.load()
+        
+        def new_connect(sock,addr):
+            next_frame = root
+            session = {}
+            session['ip'],session['port'] = sock.getpeername()
+            sock.send(ascii.CMD_CHAR_PER)
+            flag = True
+            kwargs = {}
+            while flag:
+                try:
+                    now = next_frame(self,sock,session)
+                    now.initialize(**kwargs)
+                    now.loop()
+                    flag = False
+                except GotoInterrupt as e:
+                    next_frame = e.to_where
+                    kwargs = e.kwargs
+                except EndInterrupt:
+                    break
+                
+        s = self.sock
+        try:
+            eventlet.serve(s,new_connect)
+        except KeyboardInterrupt:
+            pass
