@@ -1,42 +1,16 @@
-# -*- coding: utf-8 -*-
-
 __metaclass__ = type
 
 from chaofeng.ascii import *
-from chaofeng import launch,sleep
+from chaofeng import sleep,Frame
+from eventlet import spawn as lanuch
 from chaofeng.g import _w,_u
 
-class BaseUI:
+class ColMenu(Frame):
 
-    def __init__(self,frame,**kwarg):
-        self.frame = frame
-        self.session = frame.session
-
-    def fetch(self):
-        pass
-
-    def send(self,data):
-        pass
-
-    def clear(self):
-        pass
-
-    def read(self,termitor=['\r\n','\n','\r\0']):
-        f = self.frame
-        data = f.read()
-        self.clear()
-        while data not in termitor :
-            if self.send(data) : break
-            data = f.read()
-        return self.fetch()
-
-class ColMenu(BaseUI):
-
-    def __init__(self,frame,data,default_ord=0,height=None):
+    def initialize(self,data,default_ord=0,height=None):
         '''
         data = ( (value,keymap,[(x,y)]) ... )
         '''
-        BaseUI.__init__(self,frame)
         self.a = []
         self.kmap = {}
         self.pos = []
@@ -52,12 +26,12 @@ class ColMenu(BaseUI):
             self.pos.append((xx,yy))
         self.height = height
         self.s = default_ord
-        self.frame.write(move2(*self.pos[default_ord])+'>')
+        self.write(move2(*self.pos[default_ord])+'>')
 
     def fetch(self):
         return self.a[self.s]
 
-    def send(self,data):
+    def get(self,data):
         if data == k_down:
             if self.s+1 < len(self.a) : self.s += 1
         elif data == k_up:
@@ -77,22 +51,21 @@ class ColMenu(BaseUI):
         elif data in self.kmap :
             self.s = self.kmap[data]
         else : return
-        self.frame.write(backspace*2+move2(*self.pos[self.s])+'>')
+        self.write(backspace*2+move2(*self.pos[self.s])+'>')
 
-class TextInput(BaseUI):
-    
-    def __init__(self,frame,max_len=100):
-        BaseUI.__init__(self,frame)
+class TextInput(Frame):
+
+    def initialize(self,max_len=100):
         self.buffer = []
         self.buffer_size = max_len
 
     def fetch(self):
-        return ''.join(self.buffer)
+        return _u(''.join(self.buffer))
 
     def clear(self):
         self.buffer = []
 
-    def send(self,data):
+    def get(self,data):
         c = data[0]
         if c == theNULL: return
         elif data == k_backspace or data == k_del :
@@ -100,78 +73,72 @@ class TextInput(BaseUI):
                 p = self.buffer.pop()
                 if p >= u'\u4e00' and p <= u'\u9fa5' :
                     dd = movex(-2)
-                    self.frame.write("%s  %s" % (dd,dd))
+                    self.write("%s  %s" % (dd,dd))
                 else:
                     dd = movex(-1)
-                    self.frame.write("%s %s" % (dd,dd))
+                    self.write("%s %s" % (dd,dd))
             return
         elif ord(c) >= 32 and c != IAC:
             try:
                 self.buffer.extend(list(data.decode('gbk')))
-                self.frame.write(data)
+                self.write(data)
             except UnicodeDecodeError:
                 pass
 
-class Password(BaseUI):
+class Password(Frame):
 
-    def __init__(self,frame,max_len=100):
-        BaseUI.__init__(self,frame)
+    def initialize(self,max_len=100):
         self.buffer = []
         self.buffer_size = max_len
 
     def fetch(self):
-        return ''.join(self.buffer)
+        return _u(''.join(self.buffer))
 
     def clear(self):
         self.buffer = []
 
-    def send(self,data):
+    def get(self,data):
         if data == k_backspace or data == k_del :
             if self.buffer :
                 self.buffer.pop()
-                self.frame.write(backspace)
+                self.write(backspace)
         elif IAC > data > print_ab :
             self.buffer.append(data)
-            self.frame.write('*')
-            
-class Animation(BaseUI):
+            self.write('*')
 
-    def __init__(self,frame,data,start=0):
-        BaseUI.__init__(self,frame)
+class Animation(Frame):
+
+    def initialize(self,data,start=0,run=False,background=True):
         self.data = data
         self.len = len(self.data)
         self.select = -1
         self.start = start
+        if run :
+            if background :
+                self.thread = lanuch(self.run)
+            else:
+                self.run()
+
+    def clear(self):
+        self.thread.kill()
 
     def fetch(self):
         self.select += 1
         if self.select >= self.len : self.select = 0
         return self.data[self.select]
 
-    def send(self,data):
-        # self.frame.write(self.fetch()[0])
-        pass
-
-    def read(self):
+    def run(self):
         start = self.start
-        try:
-            while True :
-                data,time = self.fetch()
-                self.frame.write(save+move2(start,0)+data+restore)
-                sleep(time)
-        except None:
-            print 'Alert'
-            pass
-
-    def run_bg(self):
-        launch(self.read)
-
-class Table(BaseUI):
+        while True:
+            data,time = self.fetch()
+            self.write(save+move2(start,0)+data+restore)
+            sleep(time)
+            
+class Table(Frame):
 
     kmap = {}
 
-    def __init__(self,frame,format_str,line=0,data=[],default_ord=0,limit=20):
-        BaseUI.__init__(self,frame)
+    def initialize(self,format_str,line=0,data=[],default_ord=0,limit=20):
         self.format = ' '+ format_str
         self.hover = default_ord
         self.limit = limit
@@ -182,7 +149,7 @@ class Table(BaseUI):
     def fetch(self):
         return self.hover
 
-    def send(self,data):
+    def get(self,data):
         if data in self.kmap :
             self.kmap[data](self)
 
@@ -197,9 +164,9 @@ class Table(BaseUI):
         if l<m :
             buf.extend([kill_line]*(m-l))
         self.start = start
-        self.frame.write(move2(self.line,0))
-        self.frame.write(u'\r\n'.join(buf))
-        self.frame.write(move2(self.line+pos,0)+'>')
+        self.write(move2(self.line,0))
+        self.write(u'\r\n'.join(buf))
+        self.write(move2(self.line+pos,0)+'>')
     kmap[k_ctrl_l] = refresh
 
     def goto_last(self):
@@ -213,7 +180,7 @@ class Table(BaseUI):
             if self.hover >= self.start + self.limit :
                 self.refresh()
             else:
-                self.frame.write(backspace*2+movey_n+'\r>')
+                self.write(backspace*2+movey_n+'\r>')
     kmap[k_down] = move_down
 
     def move_up(self):
@@ -222,7 +189,7 @@ class Table(BaseUI):
             if self.hover < self.start :
                 self.refresh()
             else:
-                self.frame.write(backspace*2+movey_p+'\r>')
+                self.write(backspace*2+movey_p+'\r>')
     kmap[k_up] = move_up
 
     def page_down(self):
@@ -244,10 +211,9 @@ class Table(BaseUI):
         self.refresh()
     kmap[k_home] = goto_first
 
-class TextBox(BaseUI):
+class TextBox(Frame):
 
-    def __init__(self,frame,buf,limit=23):
-        super(TextBox,self).__init__(frame)
+    def initialize(self,buf,limit=23):
         self.buf = buf.split('\r\n')
         self.len = len(self.buf)
         self.limit = limit
@@ -257,21 +223,18 @@ class TextBox(BaseUI):
     def fetch(self):
         pass
 
-    def push(self,data):
-        self.frame.write(data)
-
     def goto_line(self,num):
         self.start = num
-        self.push(move0+clear1+'\r\n'.join(self.buf[num:num+self.limit])+move2(24,1))
+        self.write(move0+clear1+'\r\n'.join(self.buf[num:num+self.limit])+move2(24,1))
 
     def up_line(self):
         if self.start == 0 : return 
         self.start -= 1
-        self.push(move2(1,1)+insert1+self.buf[self.start]+move2(24,1)+kill_line)
+        self.write(move2(1,1)+insert1+self.buf[self.start]+move2(24,1)+kill_line)
     
     def down_line(self):
         if self.start + self.limit >= self.len : return
-        self.push(kill_line+self.buf[self.start+self.limit]+'\r\n')
+        self.write(kill_line+self.buf[self.start+self.limit]+'\r\n')
         self.start += 1
     
     def page_up(self):
@@ -286,7 +249,7 @@ class TextBox(BaseUI):
     def goto_last():
         pass
 
-    def send(self,data):
+    def get(self,data):
         if data == k_up :
             self.up_line()
         elif data == k_down:
@@ -300,35 +263,34 @@ class TextBox(BaseUI):
         elif data == k_end :
             self.goto_last()
 
-class TextEditor(BaseUI):
+class TextEditor(Frame):
 
-    def __init__(self,frame,text='',limit=23):
-        super(TextEditor,self).__init__(frame)
+    def initialize(self,text='',limit=23):
         self.buf = [ list(x) for x in text.split('\r\n')]
         self.now = self.buf[len(self.buf)-1]
-        self.frame.write(text)
+        self.write(text)
 
     def fetch(self):
         return '\r\n'.join( ''.join(g) for g in ( ''.join(g) for g in self.buf ))
 
-    def send(self,data):
+    def get(self,data):
         print repr(data)
         if data in ['\r','\n','\r\n'] :
             self.now = []
             self.buf.append(self.now)
-            self.frame.write('\r\n')
+            self.write('\r\n')
         elif data == k_del :
             if self.now :
                 self.now.pop()
-                self.frame.write(backspace)
+                self.write(backspace)
             elif len(self.buf)>1 :
                 self.buf.pop()
                 self.now = self.buf[len(self.buf)-1]
-                self.frame.write(movey_p)
-                if len(self.now) : self.frame.write(movex(len(self.now)))
+                self.write(movey_p)
+                if len(self.now) : self.write(movex(len(self.now)))
         elif data == k_ctrl_l :
-            self.frame.write(clear + self.fetch())
+            self.write(clear + self.fetch())
         elif data in printable or ( data[0] > k_del and data[0] != IAC) :
             data = _u(data)
             self.now.append(data)
-            self.frame.write(data)
+            self.write(data)

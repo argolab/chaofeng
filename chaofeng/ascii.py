@@ -163,11 +163,6 @@ k_left = '\x1b[D'
 k_page_up = '\x1b[5~'
 k_page_down = '\x1b[6~'
 
-k_c_a = '\x01'
-k_c_b = '\x02'
-k_c_c = '\x03'
-k_c_h = '\x08'
-
 k_home = '\x1b[1~'
 k_end = '\x1b[4~'
 
@@ -177,6 +172,11 @@ k_ctrl_e = k_ctrl_p('e')
 k_ctrl_l = k_ctrl_p('l')
 k_ctrl_b = k_ctrl_p('b')
 k_ctrl_f = k_ctrl_p('f')
+k_c_a = '\x01'
+k_c_b = '\x02'
+k_c_c = '\x03'
+k_c_h = '\x08'
+k_c_p = k_ctrl_p('p')
 
 k_del = chr(127)
 k_backspace = chr(8)

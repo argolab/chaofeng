@@ -1,8 +1,0 @@
-class T():
-
-    kmap = {}
-    
-    @classmethod
-    def bind(cls,value,*k):
-        for v in k:
-            cls.kmap[v] = value

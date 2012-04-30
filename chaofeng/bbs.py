@@ -15,18 +15,21 @@ class EndInterrupt(Exception): pass
 
 class Frame:
 
-    buffer_size = 1024
-    
-    g = {}
-
     def __init__(self,server,sock,session):
         self.session = session
         self.server = server
         self.sock = sock
+        self._subframe = []
 
-    def loop(self):
-        while True :
-            self.read()
+    def sub(self,subframe,*args,**kwargs):
+        t = subframe(self.server,self.sock,self.session)
+        t.initialize(*args,**kwargs)
+        t._father = self
+        self._subframe.append(t)
+        return t
+
+    def get(self,data):
+        pass
 
     def initialize(self):
         pass
@@ -34,7 +37,22 @@ class Frame:
     def clear(self):
         pass
 
-    get = None
+    def fetch(self):
+        pass
+
+    def loop(self):
+        while True :
+            self.read()
+
+    def read_until(self,termitor=['\r','\n','\r0']):
+        while True :
+            data = self.sock.recv(1024)
+            if not data : self.close()
+            elif data in termitor :
+                return self.fetch()
+            else:
+                self.get(data)
+                self._father.get(data)
 
     def read(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
@@ -45,12 +63,19 @@ class Frame:
             return data
             
     def write(self,data):
-        self.sock.send(data.encode('gbk'))
-
+        try:
+            self.sock.send(data.encode('gbk'))
+        except Exception,e:
+            print e
+            self.close()
+            
     def goto(self,where,**kwargs):
+        for s in self._subframe : s.clear()
+        self.clear()
         raise GotoInterrupt(where,kwargs)
 
     def close(self):
+        for s in self._subframe : s.clear()
         self.clear()
         raise EndInterrupt
 
