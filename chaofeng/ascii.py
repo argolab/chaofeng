@@ -9,6 +9,8 @@ keycode.
 
 # Color
 
+esc = '\x1b'
+
 w = lambda code: '\x1b[' + str(code) +'m'
 
 reset   = w(0)
@@ -134,6 +136,7 @@ CMD_LINEMODE = IAC+WONT+ECHO + IAC+WONT+SGA# + IAC+WILL+LINEMODE
 
 # Cursor
 
+move0 = '\x1b[H'
 movex = lambda x : '\x1b[%d%c' % (abs(x),'D' if x<0 else 'C')
 movey = lambda y : '\x1b[%d%c' % (abs(y),'A' if y<0 else 'B')
 movey_1 = '\x1b[B'
@@ -143,9 +146,12 @@ movex_f = '\x1b[C'
 movex_d = '\x1b[D'
 save =    '\x1b[s'
 restore = '\x1b[u'
+clear1 = '\x1b[J'
 clear =   '\x1b[2J'
 clear_l = '\x1b[k'
 move2 = lambda x,y : '\x1b[%d;%dH' % (x,y)
+
+insert1 = '\x1b[1L'
 
 # KeyCode
 
@@ -166,6 +172,11 @@ k_home = '\x1b[1~'
 k_end = '\x1b[4~'
 
 k_ctrl_p = lambda c : chr(ord(c)-96)
+k_ctrl_a = k_ctrl_p('a')
+k_ctrl_e = k_ctrl_p('e')
+k_ctrl_l = k_ctrl_p('l')
+k_ctrl_b = k_ctrl_p('b')
+k_ctrl_f = k_ctrl_p('f')
 
 k_del = chr(127)
 k_backspace = chr(8)
@@ -176,3 +187,7 @@ k_enter_window = chr(10)
 backspace = k_left+ ' '+k_left
 
 kill_line = '\x1b[K'
+
+import string
+
+printable = string.printable

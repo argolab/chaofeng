@@ -68,5 +68,9 @@ class StaticProxyer(Proxyer):
 static = StaticProxyer()
 static.load()
 
-def _(s):
-    return s.encode('gbk')
+_s = lambda s : s.encode('gbk')
+_u = lambda s : s.decode('gbk')
+
+def _w(format_str,obj):
+    n_obj = tuple( i.encode('gbk') if isinstance(i,unicode) else i for i in obj )
+    return ( format_str.encode('gbk') % n_obj ).decode('gbk')
