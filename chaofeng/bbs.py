@@ -47,7 +47,6 @@ class Frame:
     def read_until(self,termitor=['\r','\n','\r\x00']):
         while True :
             data = self.sock.recv(1024)
-            print repr(data)
             if not data : self.close()
             elif data in termitor :
                 return self.fetch()
@@ -82,10 +81,12 @@ class Frame:
 
 class BindFrame(Frame):
 
+    shortcuts = {}
+
     def get(self,data):
-        action = self.session['shortcuts'].get(data)
+        action = self.shortcuts.get(data)
         if action and hasattr(self,'do_'+action) :
-            getattr(self,'do_'+action)(self)
+            getattr(self,'do_'+action)()
 
 class Server:
 

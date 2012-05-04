@@ -68,11 +68,12 @@ class StaticProxyer(Proxyer):
 static = StaticProxyer()
 static.load()
 
-_s = lambda s : s.encode('gbk')
+_s = lambda s : s.encode('gbk') if isinstance(s,unicode) else s
 _u = lambda s : s.decode('gbk')
 
 def _d(format_str,obj):
-    n_obj = dict( (key, ( obj[key].encode('gbk') if isinstance(obj[key],unicode) else obj[key] )) for key in obj )
+    n_obj = dict( (key, obj[key].encode('gbk') if\
+                       isinstance(obj[key],unicode) else obj[key] ) for key in obj )
     return ( format_str.encode('gbk') % n_obj).decode('gbk')
 
 def _w(format_str,*obj):

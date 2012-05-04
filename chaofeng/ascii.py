@@ -184,6 +184,8 @@ k_backspace = chr(8)
 k_enter_linux = chr(13)
 k_enter_window = chr(10)
 
+ks_finish = ['\n','\r\n','\r\x00']
+
 backspace = k_left+ ' '+k_left
 
 kill_line = '\x1b[K'
@@ -191,3 +193,5 @@ kill_line = '\x1b[K'
 import string
 
 printable = string.printable
+
+is_chchar = lambda data : all( c >= u'\u4e00' and c <= u'\u9fa5' for c in data)

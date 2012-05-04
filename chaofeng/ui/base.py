@@ -65,25 +65,33 @@ class TextInput(Frame):
     def clear(self):
         self.buffer = []
 
+    def do_delete(self):
+        if self.buffer :
+            p = self.buffer.pop()
+            if is_chchar(p):
+                dd = movex(-2)
+                self.write("%s  %s" % (dd,dd))
+            else:
+                dd = movex(-1)
+                self.write("%s %s" % (dd,dd))
+
+    def acceptable(self,data):
+        return ord(data[0])>=32
+
     def get(self,data):
-        c = data[0]
-        if c == theNULL: return
-        elif data == k_backspace or data == k_del :
-            if self.buffer :
-                p = self.buffer.pop()
-                if p >= u'\u4e00' and p <= u'\u9fa5' :
-                    dd = movex(-2)
-                    self.write("%s  %s" % (dd,dd))
-                else:
-                    dd = movex(-1)
-                    self.write("%s %s" % (dd,dd))
-            return
-        elif ord(c) >= 32 and c != IAC:
-            try:
-                self.buffer.extend(list(data.decode('gbk')))
-                self.write(data)
-            except UnicodeDecodeError:
-                pass
+        try:
+            c = data[0]
+            if c == theNULL: return
+            elif data == k_backspace or data == k_del :
+                self.do_delete()
+            elif c != IAC and self.acceptable(data) :
+                try:
+                    self.buffer.extend(list(data.decode('gbk')))
+                    self.write(data.decode('gbk'))
+                except UnicodeDecodeError:
+                    pass
+        except:
+            pass
 
 class Password(Frame):
 
