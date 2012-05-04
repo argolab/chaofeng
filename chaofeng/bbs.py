@@ -44,9 +44,10 @@ class Frame:
         while True :
             self.read()
 
-    def read_until(self,termitor=['\r','\n','\r0']):
+    def read_until(self,termitor=['\r','\n','\r\x00']):
         while True :
             data = self.sock.recv(1024)
+            print repr(data)
             if not data : self.close()
             elif data in termitor :
                 return self.fetch()
@@ -79,6 +80,13 @@ class Frame:
         self.clear()
         raise EndInterrupt
 
+class BindFrame(Frame):
+
+    def get(self,data):
+        action = self.session['shortcuts'].get(data)
+        if action and hasattr(self,'do_'+action) :
+            getattr(self,'do_'+action)(self)
+
 class Server:
 
     def __init__(self,root,host='0.0.0.0',port=5000,max_connect=5000):
@@ -98,6 +106,7 @@ class Server:
             next_frame = root
             session = {}
             session['ip'],session['port'] = sock.getpeername()
+            session['shortcuts'] = {}
             sock.send(ascii.CMD_CHAR_PER)
             flag = True
             kwargs = {}

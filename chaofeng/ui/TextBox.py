@@ -2,9 +2,11 @@ __metaclass__ = type
 
 from chaofeng.ascii import *
 from chaofeng.g import _w,_u
-from chaofeng import Frame
+from chaofeng import BindFrame
 
-class TextBox(Frame):
+class TextBox(BindFrame):
+
+    shotcuts = {}
 
     def initialize(self,buf,limit=23):
         self.buf = buf.split('\r\n')
@@ -20,26 +22,26 @@ class TextBox(Frame):
         self.start = num
         self.write(move0+clear1+'\r\n'.join(self.buf[num:num+self.limit])+move2(24,1))
 
-    def up_line(self):
+    def do_up_line(self):
         if self.start == 0 : return 
         self.start -= 1
         self.write(move2(1,1)+insert1+self.buf[self.start]+move2(24,1)+kill_line)
     
-    def down_line(self):
+    def do_down_line(self):
         if self.start + self.limit >= self.len : return
         self.write(kill_line+self.buf[self.start+self.limit]+'\r\n')
         self.start += 1
     
-    def page_up(self):
+    def do_page_up(self):
         pass
     
-    def page_down(self):
+    def do_page_down(self):
         pass
 
-    def goto_first():
+    def do_goto_first():
         pass
 
-    def goto_last():
+    def do_goto_last():
         pass
 
     def get(self,data):

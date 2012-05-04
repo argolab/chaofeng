@@ -71,6 +71,10 @@ static.load()
 _s = lambda s : s.encode('gbk')
 _u = lambda s : s.decode('gbk')
 
-def _w(format_str,obj):
+def _d(format_str,obj):
+    n_obj = dict( (key, ( obj[key].encode('gbk') if isinstance(obj[key],unicode) else obj[key] )) for key in obj )
+    return ( format_str.encode('gbk') % n_obj).decode('gbk')
+
+def _w(format_str,*obj):
     n_obj = tuple( i.encode('gbk') if isinstance(i,unicode) else i for i in obj )
     return ( format_str.encode('gbk') % n_obj ).decode('gbk')

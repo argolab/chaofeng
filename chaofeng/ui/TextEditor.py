@@ -2,9 +2,9 @@ __metaclass__ = type
 
 from chaofeng.ascii import *
 from chaofeng.g import _w,_u
-from chaofeng import Frame
+from chaofeng import BindFrame
 
-class TextEditor(Frame):
+class TextEditor(BindFrame):
 
     def initialize(self,text='',limit=23):
         self.buf = [ list(x) for x in text.split('\r\n')]
@@ -15,7 +15,7 @@ class TextEditor(Frame):
         return '\r\n'.join( ''.join(g) for g in ( ''.join(g) for g in self.buf ))
 
     def get(self,data):
-        print repr(data)
+        super(TextEditor,self).get(data)
         if data in ['\r','\n','\r\n'] :
             self.now = []
             self.buf.append(self.now)

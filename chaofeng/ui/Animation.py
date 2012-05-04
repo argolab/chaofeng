@@ -1,5 +1,7 @@
 __metaclass__ = type
 
+from chaofeng.ascii import *
+from chaofeng import sleep
 from chaofeng import Frame
 from eventlet import spawn as lanuch
 
@@ -30,4 +32,3 @@ class Animation(Frame):
             data,time = self.fetch()
             self.write(save+move2(start,0)+data+restore)
             sleep(time)
-            

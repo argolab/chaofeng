@@ -16,12 +16,13 @@ class ColMenu(Frame):
         xx = 0
         yy = 0
         for index,item in enumerate(data) :
-            self.a.append(item[0])
-            if item[1] : self.kmap[item[1]] = index
-            if len(item) == 3 :
-                xx,yy = item[2]
+            self.a.append(item[1])
+            if item[2] : self.kmap[item[2]] = index
+            if len(item) == 4 :
+                xx,yy = item[3]
                 height = index
             else : xx += 1
+            self.write(move2(xx,yy+2) + item[0])
             self.pos.append((xx,yy))
         self.height = height
         self.s = default_ord
