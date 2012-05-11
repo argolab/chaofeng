@@ -172,6 +172,7 @@ k_ctrl_e = k_ctrl_p('e')
 k_ctrl_l = k_ctrl_p('l')
 k_ctrl_b = k_ctrl_p('b')
 k_ctrl_f = k_ctrl_p('f')
+k_ctrl_c = k_ctrl_p('c')
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'

@@ -1,34 +1,38 @@
 __metaclass__ = type
 
+from baseui import BaseUI
 from chaofeng.ascii import *
 from chaofeng import sleep
-from chaofeng import Frame
 from eventlet import spawn as lanuch
 
-class Animation(Frame):
+class Animation(BaseUI):
 
-    def initialize(self,data,start=0,run=False,background=True):
+    def __init__(self,data,start_line=0):
         self.data = data
         self.len = len(self.data)
+        self.start_line = start_line
+        
+    def init(self):
         self.select = -1
-        self.start = start
-        if run :
-            if background :
-                self.thread = lanuch(self.run)
-            else:
-                self.run()
 
     def clear(self):
-        self.thread.kill()
+        if hasattr(self,'thread') :
+            self.thread.kill()
 
-    def fetch(self):
+    def next(self):
         self.select += 1
         if self.select >= self.len : self.select = 0
-        return self.data[self.select]
 
     def run(self):
-        start = self.start
-        while True:
-            data,time = self.fetch()
-            self.write(save+move2(start,0)+data+restore)
+        s = self.start_line
+        while True :
+            self.next()
+            data,time = self.data[self.select]
+            self.frame.write(save+move2(s,0)+data+restore)
             sleep(time)
+
+    def lanuch(self):
+        self.next()
+        data,time = self.data[self.select]
+        self.frame.write(move2(self.start_line,0)+data)
+        self.thread = lanuch(self.run)

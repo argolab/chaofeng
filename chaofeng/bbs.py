@@ -2,17 +2,29 @@ __metaclass__ = type
 
 import eventlet
 from chaofeng import ascii
-from chaofeng.g import static
+from chaofeng.g import static,mark
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 
 class GotoInterrupt(Exception):
     
-    def __init__(self,to_where,kwargs):
+    def __init__(self,to_where,args,kwargs):
         self.to_where = to_where
+        self.args = args
         self.kwargs = kwargs
 
 class EndInterrupt(Exception): pass
 
+class Session:
+
+    def __init__(self):
+        self._dict = {}
+        
+    def __getitem__(self,name):
+        return self._dict.get(name)
+
+    def __setitem__(self,name,value):
+        self._dict[name] = value
+        
 class Frame:
 
     def __init__(self,server,sock,session):
@@ -20,6 +32,7 @@ class Frame:
         self.server = server
         self.sock = sock
         self._subframe = []
+        self._loading = []
 
     def sub(self,subframe,*args,**kwargs):
         t = subframe(self.server,self.sock,self.session)
@@ -28,6 +41,12 @@ class Frame:
         self._subframe.append(t)
         return t
 
+    def load(self,uix,*args,**kwargs):
+        t = uix.new(self)
+        t.init(*args,**kwargs)
+        self._loading.append(t)
+        return t
+    
     def get(self,data):
         pass
 
@@ -61,6 +80,9 @@ class Frame:
         else:
             if self.get : self.get(data)
             return data
+
+    def pause(self):
+        self.read()
             
     def write(self,data):
         try:
@@ -69,21 +91,30 @@ class Frame:
             print e
             self.close()
             
-    def goto(self,where,**kwargs):
+    def raw_goto(self,where,*args,**kwargs):
         for s in self._subframe : s.clear()
         self.clear()
-        raise GotoInterrupt(where,kwargs)
+        raise GotoInterrupt(where,args,kwargs)
+
+    def goto(self,where_mark,*args,**kwargs):
+        self.raw_goto(mark[where_mark],*args,**kwargs)
 
     def close(self):
         for s in self._subframe : s.clear()
+        for u in self._loading : u.clear()
         self.clear()
         raise EndInterrupt
 
+    def _u(self,data):
+        return unicode(data) if isinstance(data,str) else data
+
+    def _s(self,data):
+        return unicode(data) if isinstance(data,unicode) else data
+
 class BindFrame(Frame):
 
-    shortcuts = {}
-
     def get(self,data):
+        super(BindFrame,self).get(data)
         action = self.shortcuts.get(data)
         if action and hasattr(self,'do_'+action) :
             getattr(self,'do_'+action)()
@@ -105,20 +136,22 @@ class Server:
         
         def new_connect(sock,addr):
             next_frame = root
-            session = {}
-            session['ip'],session['port'] = sock.getpeername()
-            session['shortcuts'] = {}
+            session = Session()
+            session.ip,session.port = sock.getpeername()
+            session.shortcuts = {}
             sock.send(ascii.CMD_CHAR_PER)
             flag = True
+            args = []
             kwargs = {}
             while flag:
                 try:
                     now = next_frame(self,sock,session)
-                    now.initialize(**kwargs)
+                    now.initialize(*args,**kwargs)
                     now.loop()
                     flag = False
                 except GotoInterrupt as e:
                     next_frame = e.to_where
+                    args = e.args
                     kwargs = e.kwargs
                 except EndInterrupt:
                     break
