@@ -93,6 +93,7 @@ class Frame:
             
     def raw_goto(self,where,*args,**kwargs):
         for s in self._subframe : s.clear()
+        for u in self._loading : u.clear()
         self.clear()
         raise GotoInterrupt(where,args,kwargs)
 
@@ -105,11 +106,14 @@ class Frame:
         self.clear()
         raise EndInterrupt
 
-    def _u(self,data):
+    def u(self,data):
         return unicode(data) if isinstance(data,str) else data
 
-    def _s(self,data):
-        return unicode(data) if isinstance(data,unicode) else data
+    def s(self,data):
+        return str(data) if isinstance(data,unicode) else data
+
+    def fm(self,format_str,d_tuple):
+        return format_str % d_tuple
 
 class BindFrame(Frame):
 

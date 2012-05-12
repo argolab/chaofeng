@@ -1,74 +1,77 @@
-__metaclass__ = type
+import chaofeng.ascii as ac
+from baseui import BaseUI
 
-from chaofeng.ascii import *
-from chaofeng.g import _w,_u,_d
-from chaofeng import BindFrame
+class BaseTable(BaseUI):
 
-class Table(BindFrame):
+    def __init__(self,start_line=0,limit=20):
+        self.start_line = start_line
+        self.limit = limit
 
-    def initialize(self,format_str,line=0,data=[],default_ord=0,limit=20):
-        self._format = ' '+ format_str
-        self._hover = default_ord
-        self._limit = limit
-        self._line = line
-        self._data = data
-        self.do_refresh()
+    def init(self,format_str,data,default=0):
+        self.format = ' ' + format_str
+        self.data = data
+        self.hover = default
+        self.refresh()
 
     def fetch(self):
-        return self._hover
+        return self.hover
 
-    def set_format(self,format_str):
-        self._format = ' ' + format_str
-        self.do_refresh()
-
-    def do_refresh(self):
+    def refresh(self):
         buf = []
-        pos = self._hover % self._limit
-        start = self._hover - pos
-        l = len(self._data)
-        m = start + self._limit
-        for index in range(start,min(l,m)):
-            buf.append(_d(self._format,self._data[index]))
+        pos = self.hover % self.limit
+        start = self.hover - pos
+        l = len(self.data)
+        m = start + self.limit
+        for index in range(start,min(l,m)) :
+            buf.append(self.frame.fm(self.format,self.data[index]))
         if l<m :
-            buf.extend([kill_line]*(m-l))
-        self._start = start
-        self.write(move2(self._line,0))
-        self.write(u'\r\n'.join(buf))
-        self.write(move2(self._line+pos,0)+'>')
+            buf.extend([ac.kill_line]*(m-l))
+        self.start = start
+        self.frame.write(ac.move2(self.start_line,0))
+        self.frame.write(u'\r\n'.join(buf))
+        self.frame.write(ac.move2(self.start_line+pos,0)+'>')
 
-    def do_goto_last(self):
-        self._hover = len(self._data)-1
+    def refresh_cursor(self):
+        pos = self.hover % self.limit
+        self.write(ac.move2(self.start_line + pos,0) + '>')
+
+    def goto(self,which):
+        self.hover = min(max(which,0),len(self.data))
         self.refresh()
 
-    def do_move_down(self):
-        if self._hover + 1 < len(self._data) :
-            self._hover += 1
-            if self._hover >= self._start + self._limit :
-                self.refresh()
-            else:
-                self.write(backspace*2+movey_n+'\r>')
-
-    def do_move_up(self):
-        if self._hover > 0 :
-            self._hover -= 1
-            if self._hover < self._start :
-                self.refresh()
-            else:
-                self.write(backspace*2+movey_p+'\r>')
-
-    def do_page_down(self):
-        self._hover += self._limit
-        l = len(self._data)
-        if self._hover >= l : self._hover = l-1
+    def goto_offset(self,offset):
+        self.hover = min(max(self.hover + offset,0),len(self.data))
         self.refresh()
 
-    def do_page_up(self):
-        self._hover -= self._limit
-        if self._hover < 0 :
-            self._hover = 0
-        self.refresh()
+class SimpleTable(BaseTable):
 
-    def do_goto_first(self):
-        self._hover = 0
-        self.refresh()
+    key_maps = {
+        ac.k_up : "move_up",
+        ac.k_down : "move_down",
+        ac.k_page_down : "page_down",
+        ac.k_page_up : "page_up",
+        ac.k_home : "go_first",
+        ac.k_end : "go_last",
+        }
+    
+    def send(self,data):
+        if data in self.key_maps :
+            getattr(self,self.key_maps[data])()
 
+    def move_down(self):
+        self.goto_offset(1)
+
+    def move_up(self):
+        self.goto_offset(-1)
+
+    def page_down(self):
+        self.goto_offset(self.limit)
+        
+    def page_up(self):
+        self.goto_offset(-self.limit)
+
+    def go_first(self):
+        self.goto(0)
+
+    def go_last(self):
+        self.goto(len(data))

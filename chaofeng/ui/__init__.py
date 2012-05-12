@@ -1,5 +1,5 @@
 from Animation import Animation
-from Table import Table
+from Table import BaseTable,SimpleTable
 from TextBox import TextBox
 from TextEditor import TextEditor
 

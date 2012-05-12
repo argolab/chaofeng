@@ -14,6 +14,7 @@ class ColMenu(BaseUI):
         buf = []
         self.shortcuts = {}
         self.pos = []
+        self.values = []
         x = y = 0
         for index,item in enumerate(data) :
             if len(item) == 4 :
@@ -25,6 +26,7 @@ class ColMenu(BaseUI):
             buf.append(ac.move2(x,y+2)+text)
             self.shortcuts[key] = index
             self.pos.append((x,y))
+            self.values.append(value)
         self.len = len(data)
         self.height = height
         self.content = ''.join(buf)
@@ -34,7 +36,7 @@ class ColMenu(BaseUI):
         if refresh : self.refresh()
         
     def fetch(self):
-        return self.value[self.hover]
+        return self.values[self.hover]
 
     def refresh(self):
         self.frame.write(self.content)
