@@ -72,3 +72,47 @@ class SingleTextBox(BaseTextBox):
         self.frame.write(self.text)
         self.frame.pause()
         self.frame.refresh()
+
+class LongTextBox(BaseTextBox):
+
+    key_maps = {
+        ac.k_down : "move_down",
+        ac.k_up : "move_up",
+        }
+
+    def __init__(self,limit=24):
+        self.limit = limit
+        
+    def init(self,text):
+        self.buf = text.split('\r\n')
+        self.len = len(self.buf)
+        self.goto_line(0)
+
+    def goto_line(self,num):
+        self.start = num
+        self.frame.write(ac.move0 + ac.clear1 +
+                         '\r\n'.join(self.buf[num:num+self.limit]) +
+                         ac.move2(24,1))
+
+    def send(self,data):
+        if data in self.key_maps :
+            getattr(self,self.key_maps[data])()
+
+    def handle_last(self):
+        pass
+
+    def handle_finish(self):
+        raise NotImplementedError
+
+    def move_up(self):
+        if self.start == 0 :
+            return
+        self.start -= 1
+        self.frame.write(ac.move0 + ac.insert1 + self.buf[self.start])
+        self.handle_last()
+        
+    def move_down(self):
+        if self.start + self.limit >= self.len :
+            self.handle_finish()
+        self.frame.write(ac.kill_line + self.buf[self.start+self.limit]+'\r\n')
+        self.start += 1

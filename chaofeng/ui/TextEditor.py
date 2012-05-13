@@ -9,7 +9,7 @@ class TextEditor(BaseUI):
         "\r\x00":"new_line",
         ac.k_del:"backspace",
         ac.k_backspace:"backspace",
-        ac.k_ctrl_f:"refresh",
+        ac.k_ctrl_l:"refresh",
         }
         
 

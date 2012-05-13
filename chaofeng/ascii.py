@@ -193,6 +193,6 @@ kill_line = '\x1b[K'
 
 import string
 
-printable = string.printable
+printable = [chr(x) for x in range(32,127)]
 
 is_chchar = lambda data : all( c >= u'\u4e00' and c <= u'\u9fa5' for c in data)

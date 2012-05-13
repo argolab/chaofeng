@@ -179,7 +179,9 @@ class Server:
                     e.callback()
                 except Exception,e :
                     traceback.print_exc()
-                    break
+                    next_frame = mark['bad_ending']
+                    args = [e]
+                    kwargs = {}
                 
         s = self.sock
         try:
