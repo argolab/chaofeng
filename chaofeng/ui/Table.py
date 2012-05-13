@@ -7,11 +7,12 @@ class BaseTable(BaseUI):
         self.start_line = start_line
         self.limit = limit
 
-    def init(self,format_str,data,default=0):
+    def init(self,format_str,data,default=0,refresh=True):
         self.format = ' ' + format_str
         self.data = data
         self.hover = default
-        self.refresh()
+        if refresh :
+            self.refresh()
 
     def fetch(self):
         return self.hover
@@ -36,11 +37,11 @@ class BaseTable(BaseUI):
         self.write(ac.move2(self.start_line + pos,0) + '>')
 
     def goto(self,which):
-        self.hover = min(max(which,0),len(self.data))
+        self.hover = min(max(which,0),len(self.data)-1)
         self.refresh()
 
     def goto_offset(self,offset):
-        self.hover = min(max(self.hover + offset,0),len(self.data))
+        self.hover = min(max(self.hover + offset,0),len(self.data)-1)
         self.refresh()
 
 class SimpleTable(BaseTable):

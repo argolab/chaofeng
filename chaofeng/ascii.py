@@ -166,18 +166,18 @@ k_page_down = '\x1b[6~'
 k_home = '\x1b[1~'
 k_end = '\x1b[4~'
 
-k_ctrl_p = lambda c : chr(ord(c)-96)
-k_ctrl_a = k_ctrl_p('a')
-k_ctrl_e = k_ctrl_p('e')
-k_ctrl_l = k_ctrl_p('l')
-k_ctrl_b = k_ctrl_p('b')
-k_ctrl_f = k_ctrl_p('f')
-k_ctrl_c = k_ctrl_p('c')
+k_cp = lambda c : chr(ord(c)-96)
+k_ctrl_a = k_cp('a')
+k_ctrl_e = k_cp('e')
+k_ctrl_l = k_cp('l')
+k_ctrl_b = k_cp('b')
+k_ctrl_f = k_cp('f')
+k_ctrl_c = k_cp('c')
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'
 k_c_h = '\x08'
-k_c_p = k_ctrl_p('p')
+k_c_p = k_cp('p')
 
 k_del = chr(127)
 k_backspace = chr(8)

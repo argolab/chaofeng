@@ -1,37 +1,65 @@
-__metaclass__ = type
+from baseui import BaseUI
+import chaofeng.ascii as ac
 
-from chaofeng.ascii import *
-from chaofeng.g import _w,_u
-from chaofeng import BindFrame
+class TextEditor(BaseUI):
 
-class TextEditor(BindFrame):
+    key_maps = {
+        '\n':"new_line",
+        '\r\n':"new_line",
+        "\r\x00":"new_line",
+        ac.k_del:"backspace",
+        ac.k_backspace:"backspace",
+        ac.k_ctrl_f:"refresh",
+        }
+        
 
-    def initialize(self,text='',limit=23):
-        self.buf = [ list(x) for x in text.split('\r\n')]
+    def __init__(self,limit=23,buf_size=32767):
+        self.limit = limit
+        self.buf_size = buf_size
+
+    def init(self,text=''):
+        self.buf = [list(x) for x in text.split('\r\n')]
         self.now = self.buf[len(self.buf)-1]
-        self.write(text)
-
+        
     def fetch(self):
         return '\r\n'.join( ''.join(g) for g in ( ''.join(g) for g in self.buf ))
 
-    def get(self,data):
-        super(TextEditor,self).get(data)
-        if data in ['\r','\n','\r\n'] :
-            self.now = []
-            self.buf.append(self.now)
-            self.write('\r\n')
-        elif data == k_del :
-            if self.now :
-                self.now.pop()
-                self.write(backspace)
-            elif len(self.buf)>1 :
-                self.buf.pop()
-                self.now = self.buf[len(self.buf)-1]
-                self.write(movey_p)
-                if len(self.now) : self.write(movex(len(self.now)))
-        elif data == k_ctrl_l :
-            self.write(clear + self.fetch())
-        elif data in printable or ( data[0] > k_del and data[0] != IAC) :
-            data = _u(data)
-            self.now.append(data)
-            self.write(data)
+    def send(self,data):
+        if data in self.key_maps :
+            getattr(self,self.key_maps[data])()
+        data = self.frame.u(data)
+        # todo : max_buf_size
+        if self.acceptable(data) :
+            self.insert(data)
+
+    def write(self,data):
+        self.frame.write(data)
+
+    def new_line(self):
+        self.now = []
+        self.buf.append(self.now)
+        self.write('\r\n')
+
+    def backspace(self):
+        if self.now :
+            self.now.pop()
+            self.write(ac.backspace)
+        elif len(self.buf)>1 :
+            self.buf.pop()
+            self.now = self.buf[len(self.buf)-1]
+            self.write(ac.movey_p)
+            if len(self.now) : self.write(ac.movex(len(self.now)))
+    
+    def refresh(self):
+        self.write(ac.clear)
+        self.write(self.fetch())
+
+    def insert(self,char):
+        self.now.append(char)
+        self.write(char)
+
+    def acceptable(self,char):
+        try:
+            return char.isalnum()
+        except:
+            return False

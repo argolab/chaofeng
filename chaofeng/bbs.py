@@ -4,6 +4,7 @@ import eventlet
 from chaofeng import ascii
 from chaofeng.g import static,mark
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
+import traceback
 
 class GotoInterrupt(Exception):
     
@@ -13,6 +14,11 @@ class GotoInterrupt(Exception):
         self.kwargs = kwargs
 
 class EndInterrupt(Exception): pass
+
+class FrameInterrupt(Exception):
+
+    def __init__(self,callback_name):
+        self.callback_name = callback_name
 
 class Session:
 
@@ -53,6 +59,9 @@ class Frame:
     def initialize(self):
         pass
 
+    def refresh(self):
+        pass
+
     def clear(self):
         pass
 
@@ -81,9 +90,16 @@ class Frame:
             if self.get : self.get(data)
             return data
 
+    def read_secret(self,buffer_size=1024):
+        data = self.sock.recv(buffer_size)
+        if not data :
+            self.close()
+        else:
+            return data
+        
     def pause(self):
-        self.read()
-            
+        self.read_secret()
+        
     def write(self,data):
         try:
             self.sock.send(data.encode('gbk'))
@@ -158,6 +174,11 @@ class Server:
                     args = e.args
                     kwargs = e.kwargs
                 except EndInterrupt:
+                    break
+                except FrameInterrupt,e:
+                    e.callback()
+                except Exception,e :
+                    traceback.print_exc()
                     break
                 
         s = self.sock
