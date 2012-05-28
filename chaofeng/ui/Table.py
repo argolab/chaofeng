@@ -7,11 +7,16 @@ class BaseTable(BaseUI):
         self.start_line = start_line
         self.limit = limit
 
-    def init(self,format_str,data,default=0,refresh=True):
-        self.format = ' ' + format_str
-        self.data = data
-        self.hover = default
-        if refresh :
+    def init(self,data=None,default=0,refresh=True):
+        self.setup(data,default,refresh)
+        
+    def setup(self,data=None,default=None,refresh=True):
+        if data is not None:
+            self.data = data
+        if default is not None:
+            self.default = default
+            self.hover = default
+        if refresh is True:
             self.refresh()
 
     def fetch(self):
@@ -26,7 +31,7 @@ class BaseTable(BaseUI):
         l = len(self.data)
         m = start + self.limit
         for index in range(start,min(l,m)) :
-            buf.append(self.frame.fm(self.format,self.data[index]))
+            buf.append(self.data[index])
         if l<m :
             buf.extend([ac.kill_line]*(m-l))
         self.start = start
