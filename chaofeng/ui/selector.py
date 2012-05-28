@@ -10,11 +10,15 @@ class ColMenu(BaseUI):
         ac.k_right : "move_right",
         }
 
-    def __init__(self,data,height=None):
-        buf = []
+    def __init__(self,data=None,height=None):
         self.shortcuts = {}
         self.pos = []
         self.values = []
+        if data is not None:
+            self.setup(data,height)
+
+    def setup(self,data,height=None,background=''): 
+        buf = [background]
         x = y = 0
         for index,item in enumerate(data) :
             if len(item) == 4 :

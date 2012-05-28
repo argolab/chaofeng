@@ -18,6 +18,8 @@ class BaseTable(BaseUI):
         return self.hover
 
     def refresh(self):
+        if self.hover < 0 :
+            return
         buf = []
         pos = self.hover % self.limit
         start = self.hover - pos

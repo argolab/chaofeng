@@ -5,6 +5,7 @@ from chaofeng import ascii
 from chaofeng.g import static,mark
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 import traceback
+import sys
 
 class GotoInterrupt(Exception):
     
@@ -22,14 +23,18 @@ class FrameInterrupt(Exception):
 
 class Session:
 
-    def __init__(self):
+    def __init__(self,codecs='gbk'):
         self._dict = {}
+        self.set_charset(codecs)
         
     def __getitem__(self,name):
         return self._dict.get(name)
 
     def __setitem__(self,name,value):
         self._dict[name] = value
+
+    def set_charset(self,codecs):
+        self.charset = codecs
         
 class Frame:
 
@@ -72,22 +77,15 @@ class Frame:
         while True :
             self.read()
 
-    def read_until(self,termitor=['\r','\n','\r\x00']):
-        while True :
-            data = self.sock.recv(1024)
-            if not data : self.close()
-            elif data in termitor :
-                return self.fetch()
-            else:
-                self.get(data)
-                self._father.get(data)
-
     def read(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
         if not data :
             self.close()
         else:
             if self.get : self.get(data)
+            try:
+                data = self.u(data)
+            except: pass
             return data
 
     def read_secret(self,buffer_size=1024):
@@ -97,15 +95,20 @@ class Frame:
         else:
             return data
         
-    def pause(self):
+    def pause(self,prompt=None):
+        if prompt is not None:
+            self.write(prompt)
         self.read_secret()
         
     def write(self,data):
         try:
-            self.sock.send(data.encode('gbk'))
+            self.sock.send(self.s(data))
         except Exception,e:
             print e
             self.close()
+
+    def writeln(self,data):
+        self.write(data + '\r\n')
             
     def raw_goto(self,where,*args,**kwargs):
         for s in self._subframe : s.clear()
@@ -130,6 +133,47 @@ class Frame:
 
     def fm(self,format_str,d_tuple):
         return format_str % d_tuple
+
+import termios, sys, os
+
+class LocalFrame(Frame):
+
+    def __init__(self):
+        self._loading = []
+
+    def _read(self):
+        TERMIOS = termios
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd)
+        new = termios.tcgetattr(fd)
+        new[3] = new[3] & ~TERMIOS.ICANON & ~TERMIOS.ECHO
+        new[6][TERMIOS.VMIN] = 1
+        new[6][TERMIOS.VTIME] = 0
+        termios.tcsetattr(fd, TERMIOS.TCSANOW, new)
+        c = None
+        try:
+            c = os.read(fd, 1024)
+        finally:
+            termios.tcsetattr(fd, TERMIOS.TCSAFLUSH, old)
+        return c
+
+    def read(self,buffer_size=1024):
+        data = self._read()
+        if not data :
+            self.close()
+        else:
+            if self.get : self.get(data)
+            try:
+                data = self.u(data)
+            except: pass
+            return data
+
+    def read_secret(self,buffer_size=1024):
+        data = self._read()
+        if not data :
+            self.close()
+        else:
+            return data
 
 class BindFrame(Frame):
 
@@ -178,10 +222,13 @@ class Server:
                 except FrameInterrupt,e:
                     e.callback()
                 except Exception,e :
+                    print 'Bad Ending [%s]' % session.ip
                     traceback.print_exc()
                     next_frame = mark['bad_ending']
                     args = [e]
                     kwargs = {}
+                now.clear()
+            print 'End [%s]' % session.ip
                 
         s = self.sock
         try:

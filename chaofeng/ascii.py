@@ -147,7 +147,8 @@ movex_d = '\x1b[D'
 save =    '\x1b[s'
 restore = '\x1b[u'
 clear1 = '\x1b[J'
-clear =   '\x1b[2J'
+clear_2 =   '\x1b[2J'
+clear = move0 + clear_2
 clear_l = '\x1b[k'
 move2 = lambda x,y : '\x1b[%d;%dH' % (x,y)
 

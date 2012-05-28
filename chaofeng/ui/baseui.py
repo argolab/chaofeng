@@ -13,6 +13,9 @@ class BaseUI:
         res.frame = frame
         return res
 
+    def copy(self):
+        return copy(self)
+
     def send(self,data):
         raise NotImplementedError
 

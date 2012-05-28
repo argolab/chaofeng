@@ -11,9 +11,10 @@ class Animation(BaseTextBox):
     Call back self.frame.play_done wher playone is True.
     '''
     def __init__(self,data=None,start_line=0):
+        self.data = data
         if data :
-            self.data = data
             self.len = len(self.data)
+        else : self.len = 0
         self.start_line = start_line
         
     def init(self,data=None,auto_play=False,playone=False):

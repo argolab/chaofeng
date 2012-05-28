@@ -4,6 +4,8 @@ from chaofeng.ascii import *
 from string import Template
 from os import walk as os_walk
 from os import path as os_path
+from os.path import basename as os_basename
+
 import re
 import codecs
 
@@ -55,15 +57,18 @@ class StaticProxyer(Proxyer):
     '''
     Load the static resouce.
     '''
-    def load(self,path='./static/',file_map=None,encoding="utf8",mode="r"):
+    
+    def load(self,path='./static',file_map=None,encoding="utf8",mode="r"):
+        path = os_path.normpath(path)
         if file_map == None :
             file_map = f_map
         for root,dirs,files in os_walk(path):
             for filename in files :
                 (name,suf) = os_path.splitext(filename)
+                prefix = root[len(path)+1:]
                 if suf in file_map:
-                    with codecs.open(path+filename,mode,encoding=encoding) as f :
-                        self[name]=file_map[suf](f)
+                    with codecs.open(root+'/'+filename,mode,encoding=encoding) as f :
+                        self[os_path.join(prefix,name)]=file_map[suf](f)
 
 static = StaticProxyer()
 static.load()
