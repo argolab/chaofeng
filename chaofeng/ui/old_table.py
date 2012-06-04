@@ -3,6 +3,10 @@ from baseui import BaseUI
 
 class BaseTable(BaseUI):
 
+    '''
+    ! data must have .get(startx,lenth) method
+    '''
+
     def __init__(self,start_line=0,limit=20):
         self.start_line = start_line
         self.limit = limit
@@ -25,12 +29,17 @@ class BaseTable(BaseUI):
     def refresh(self):
         if self.hover < 0 :
             return
+        print 'FFF'
         pos = self.hover % self.limit
         start = self.hover - pos
-        buf = self.data.get(start,self.limit)
+        buf = self.data.get(start, self.limit)
         l = len(buf)
-        if l < self.limit :
-            buf.extend([ac.kill_line]*(self.limit -l))
+        if (l == 0 ) and self.hover:
+            self.hover = 0
+            self.refresh()
+            return
+        if l < self.limit:
+            buf.extend([ac.kill_line]*(self.limit - l))
         self.start = start
         self.frame.write(ac.move2(self.start_line,0))
         self.frame.write(u'\r\n'.join(buf))
@@ -38,14 +47,14 @@ class BaseTable(BaseUI):
 
     def refresh_cursor(self):
         pos = self.hover % self.limit
-        self.write(ac.move2(self.start_line + pos,0) + '>')
+        self.frame.write(ac.move2(self.start_line + pos,0) + '>')
 
     def goto(self,which):
-        self.hover = min(max(which,0),len(self.data)-1)
+        self.hover = max(which,0)
         self.refresh()
 
     def goto_offset(self,offset):
-        self.hover = min(max(self.hover + offset,0),len(self.data)-1)
+        self.hover = max(self.hover + offset,0)
         self.refresh()
 
 class SimpleTable(BaseTable):

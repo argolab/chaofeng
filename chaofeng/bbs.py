@@ -21,6 +21,8 @@ class FrameInterrupt(Exception):
     def __init__(self,callback_name):
         self.callback_name = callback_name
 
+class BadEndInterrupt(Exception): pass
+
 class Session:
 
     def __init__(self,codecs='gbk'):
@@ -80,7 +82,7 @@ class Frame:
     def read(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
         if not data :
-            self.close()
+            raise BadEndInterrupt
         else:
             if self.get : self.get(data)
             try:
@@ -91,7 +93,7 @@ class Frame:
     def read_secret(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
         if not data :
-            self.close()
+            raise BadEndInterrupt
         else:
             return data
         
@@ -105,9 +107,10 @@ class Frame:
             self.sock.send(self.s(data))
         except Exception,e:
             print e
+            traceback.print_exc()
             self.close()
 
-    def writeln(self,data):
+    def writeln(self,data=''):
         self.write(data + '\r\n')
             
     def raw_goto(self,where,*args,**kwargs):
@@ -125,11 +128,15 @@ class Frame:
         self.clear()
         raise EndInterrupt
 
-    def u(self,data):
-        return unicode(data) if isinstance(data,str) else data
+    @property
+    def charset(self):
+        return 'gbk'
 
-    def s(self,data):
-        return str(data) if isinstance(data,unicode) else data
+    def u(self,s):
+        return s.decode(self.charset)
+
+    def s(self,u):
+        return u.encode(self.charset)
 
     def fm(self,format_str,d_tuple):
         return format_str % d_tuple
@@ -222,11 +229,18 @@ class Server:
                 except FrameInterrupt,e:
                     e.callback()
                 except Exception,e :
+                    try:
+                        now.clear()
+                    except:
+                        pass
                     print 'Bad Ending [%s]' % session.ip
                     traceback.print_exc()
-                    next_frame = mark['bad_ending']
-                    args = [e]
-                    kwargs = {}
+                    try:
+                        t = mark['bad_ending'](self,sock,session)
+                        t.bad_ending(e)
+                    except :
+                        traceback.print_exc()
+                        break
                 now.clear()
             print 'End [%s]' % session.ip
                 

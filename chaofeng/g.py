@@ -16,6 +16,7 @@ class Proxyer(dict):
     def __call__(self,name):
         def mark_inner(obj):
             self[name] = obj
+            obj.__mark__ = name
             return obj
         return mark_inner
 
@@ -46,8 +47,9 @@ def load_animation(f):
     v = []
     for line in f :
         if line.startswith('----') :
-            num = int(re.match('---- ([0-9]*)',line).group(1))
-            v.append(('\r'.join(buf),num))
+            d = re.match('---- ([0-9]*)',line).group(1)
+            d = int(d)
+            v.append(('\r'.join(buf),d))
             buf = []
         else :
             buf.append(line)

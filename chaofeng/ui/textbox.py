@@ -31,20 +31,22 @@ class Animation(BaseTextBox):
             self.thread.kill()
 
     def next(self):
-        self.select += 1
-        if self.select >= self.len :
+        print self.select
+        if self.select+1 >= self.len :
             if self.playone :
                 self.frame.play_done()
             self.select = 0
+        else:
+            self.select += 1
 
-    def send(self,data):
+    def send(self,sp):
         s = self.start_line
         while True :
             self.next()
             data,time = self.data[self.select]
             self.frame.write(ac.save+ac.move2(s,0)+data+ac.restore)
             if time == 0 :
-                break
+                self.frame.pause()
             else:
                 sleep(time)
 

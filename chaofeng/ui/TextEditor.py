@@ -20,6 +20,9 @@ class TextEditor(BaseUI):
     def init(self,text=''):
         self.buf = [list(x) for x in text.split('\r\n')]
         self.now = self.buf[len(self.buf)-1]
+
+    def title(self):
+        return ''.join(self.buf[0])
         
     def fetch(self):
         return '\r\n'.join( ''.join(g) for g in ( ''.join(g) for g in self.buf ))

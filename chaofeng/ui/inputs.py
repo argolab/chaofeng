@@ -14,7 +14,9 @@ class BaseInput(BaseUI):
         if prompt :
             self.prompt = prompt
 
-    def init(self):
+    def init(self,prompt=None):
+        if prompt:
+            self.prompt = prompt
         self.buffer = []
 
     def fetch(self):
@@ -24,7 +26,10 @@ class BaseInput(BaseUI):
         return True
 
     def push(self,data):
-        self.buffer.append(data)
+        if isinstance(data,list):
+            self.buffer.extend(data)
+        else:
+            self.buffer.append(data)
 
     def send(self,data):
         if data in self.key_maps :
@@ -64,22 +69,85 @@ class TextInput(BaseInput):
     def acceptable(self,data):
         return data.isalnum()
 
+class HiddenInput(TextInput):
+
+    def __init__(self,buffer_size=80,text='',start_line=0):
+        super(HiddenInput,self).__init__(buffer_size)
+        self.start_line = start_line
+        self.set_text(text)
+
+    def init(self,text=None,refresh=True):
+        super(HiddenInput,self).init()
+        self.set_text(text)
+        if refresh:
+            self.hidden()
+        
+    def set_text(self,text):
+        if text :
+            self.text = text
+
+    def read(self,prompt=None,termitor=ac.ks_finish):
+        self.frame.write(ac.move2(self.start_line,0) + ac.kill_line)
+        if prompt :
+            self.frame.write(prompt)
+        elif hasattr(self,'prompt') :
+            self.frame.write(self.prompt)
+        self.init(refresh=False)
+        while True :
+            data = self.frame.read_secret()
+            if data in termitor :
+                break
+            self.send(data)
+        self.frame.write(ac.move2(self.start_line,0) +
+                         ac.kill_line + self.text)
+        return self.fetch()
+
+    def send_with_hook(self,data):
+        if data in self.key_maps :
+            getattr(self,self.key_maps[data])()
+        if len(self.buffer) < self.buffer_size and self.acceptable(data) :
+            self.push_with_hook(data)
+
+    def push_with_hook(self,data):
+        super(HiddenInput,self).push(data)
+        self.hook(''.join(self.buffer))
+
+    def read_with_hook(self,hook,prompt=None,termitor=ac.ks_finish):
+        self.hook = hook
+        self.frame.write(ac.save + ac.move2(self.start_line,0) + ac.kill_line)
+        if prompt :
+            self.frame.write(prompt)
+        elif hasattr(self,'prompt') :
+            self.frame.write(self.prompt)
+        self.init(refresh=False)
+        while True :
+            data = self.frame.read_secret()
+            if data in termitor :
+                break
+            self.send_with_hook(data)
+        self.frame.write(ac.move2(self.start_line,0) +
+                         ac.kill_line + self.text + ac.restore)
+        return self.fetch()
+
+    def hidden(self):
+        self.frame.write(ac.move2(self.start_line,0) + self.text)
+
 class UnicodeTextInput(BaseInput):
 
-    def send(self,data):
-        if data in self.key_maps :
-            getattr(self,data)()
+    def send(self,u_data):
+        if u_data in self.key_maps :
+            getattr(self,self.key_maps[u_data])()
         try:
-            u_data = self.frame.u(data)
             if len(self.buffer) + len(u_data) < self.buffer_size \
                     and self.acceptable(u_data) :
                 self.push(u_data)
-        except : pass
+        except UnicodeDecodeError:
+            pass
         
     def push(self,u_data):
-        super(TextInput,self).push(list(u_data))
+        super(UnicodeTextInput,self).push(list(u_data))
         self.frame.write(u_data)
-
+        
     def delete(self):
         raise NotImplementedError
 
@@ -89,9 +157,7 @@ class UnicodeTextInput(BaseInput):
 class zhTextInput(UnicodeTextInput):
 
     def acceptable(self,u_data):
-        return u_data[0] != ac.IAC and \
-            (data in ac.printable or \
-            ac.is_chchar(u_data))
+        return (u_data in ac.printable ) or ac.is_chchar(u_data)
 
     def delete(self):
         if self.buffer :

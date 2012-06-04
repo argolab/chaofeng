@@ -7,7 +7,7 @@ class BaseInput(BaseUI):
         ac.k_backspace : "delete",
         }
     
-    def __init__(self,buffer_size=1024):
+    def __init__(self,buffer_size=80):
         self.buffer_size = buffer_size
 
     def init(self):
