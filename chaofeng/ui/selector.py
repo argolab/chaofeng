@@ -10,39 +10,60 @@ class ColMenu(BaseUI):
         ac.k_right : "move_right",
         }
 
-    def __init__(self,data=None,height=None):
+    def __init__(self,**kwargs):
         self.shortcuts = {}
         self.pos = []
         self.values = []
-        if data is not None:
-            self.setup(data,height)
+        self.height = None
+        self.setup(**kwargs)
 
-    def setup(self,data,height=None,background=''): 
-        buf = [background]
-        x = y = 0
+    def setup(self,data=None,height=None,background=None,hover=None):
+        if hover is not None:
+            self.hover = hover
+        if background is not None:
+            self.background = background
+        if height is not None:
+            self.height = height
+        if data is not None:
+            self.set_data(*data)
+
+    def set_data(self,values,pos,shortcuts,outlook):
+        self.values = values
+        self.pos = pos
+        self.shortcuts = shortcuts
+        self.content = self.background + outlook
+        self.len = len(self.values)
+
+    def set_content(self,content):
+        self.content = content
+
+    @staticmethod
+    def tidy_data(data):
+        shortcuts = {}
+        pos = []
+        values = []
+        buf = []
         for index,item in enumerate(data) :
             if len(item) == 4 :
                 text,value,key,(x,y) = item
-                if not height : height = index
             else :
                 text,value,key = item
                 x += 1
             buf.append(ac.move2(x,y+2)+text)
-            self.shortcuts[key] = index
-            self.pos.append((x,y))
-            self.values.append(value)
-        self.len = len(data)
-        self.height = height
-        self.content = ''.join(buf)
+            shortcuts[key] = index
+            pos.append((x,y))
+            values.append(value)
+        return (values,pos,shortcuts,''.join(buf))
 
-    def init(self,default=0,refresh=True):
-        self.hover = default
-        if refresh : self.refresh()
+    def init(self,refresh=False,**kwargs):
+        self.setup(**kwargs)
+        if refresh :
+            self.display()
         
     def fetch(self):
         return self.values[self.hover]
 
-    def refresh(self):
+    def display(self):
         self.frame.write(self.content)
         self.frame.write(ac.move2(*self.pos[self.hover])+'>')
 

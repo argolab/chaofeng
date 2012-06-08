@@ -7,12 +7,15 @@ class BaseTable(BaseUI):
         self.start_line = start_line
         self.limit = limit
 
-    def init(self,data=None,default=0,refresh=True):
-        self.setup(data,default,refresh)
+    def init(self,getdata=None,fformat=None,default=0,refresh=False):
+        self.max = 0
+        self.setup(getdata,fformat,default,refresh)
         
-    def setup(self,data=None,default=None,refresh=True):
-        if data is not None:
-            self.data = data
+    def setup(self,getdata=None,fformat=None,default=None,refresh=True):
+        if getdata is not None:
+            self.getdata = getdata
+        if fformat is not None:
+            self.fformat = fformat
         if default is not None:
             self.default = default
             self.hover = default
@@ -20,17 +23,19 @@ class BaseTable(BaseUI):
             self.refresh()
 
     def fetch(self):
-        return self.hover
+        return self.data[self.hover]
 
     def refresh(self):
         if self.hover < 0 :
             return
         pos = self.hover % self.limit
         start = self.hover - pos
-        buf = self.data.get(start,self.limit)
+        self.data = self.getdata(start,self.limit)
+        buf = map(self.fformat, self.data)
         l = len(buf)
         if l < self.limit :
             buf.extend([ac.kill_line]*(self.limit -l))
+        self.max = start + l - 1
         self.start = start
         self.frame.write(ac.move2(self.start_line,0))
         self.frame.write(u'\r\n'.join(buf))
@@ -38,14 +43,14 @@ class BaseTable(BaseUI):
 
     def refresh_cursor(self):
         pos = self.hover % self.limit
-        self.write(ac.move2(self.start_line + pos,0) + '>')
+        self.frame.write(ac.move2(self.start_line + pos,0) + '>')
 
     def goto(self,which):
-        self.hover = min(max(which,0),len(self.data)-1)
+        self.hover = min(max(which,0),self.max)
         self.refresh()
 
     def goto_offset(self,offset):
-        self.hover = min(max(self.hover + offset,0),len(self.data)-1)
+        self.hover = min(max(self.hover + offset,0),self.max)
         self.refresh()
 
 class SimpleTable(BaseTable):
@@ -56,7 +61,6 @@ class SimpleTable(BaseTable):
         ac.k_page_down : "page_down",
         ac.k_page_up : "page_up",
         ac.k_home : "go_first",
-        ac.k_end : "go_last",
         }
     
     def send(self,data):
@@ -77,6 +81,3 @@ class SimpleTable(BaseTable):
 
     def go_first(self):
         self.goto(0)
-
-    def go_last(self):
-        self.goto(len(data))

@@ -31,7 +31,6 @@ class Animation(BaseTextBox):
             self.thread.kill()
 
     def next(self):
-        print self.select
         if self.select+1 >= self.len :
             if self.playone :
                 self.frame.play_done()
@@ -83,39 +82,70 @@ class LongTextBox(BaseTextBox):
         ac.k_up : "move_up",
         }
 
-    def __init__(self,limit=24):
-        self.limit = limit
+    def __init__(self,limit=23):
+        self.limit=limit
+        self.buf = None
         
-    def init(self,text):
+    def init(self,text=None):
+        if text is not None:
+            self.set_text(text)
+
+    def bind(self,bottom_bar,callback):
+        self.handle_finish = callback
+        self.bottom_bar = bottom_bar
+
+    @property
+    def screen(self):
+        return '\r\n'.join(self.buf[self.start:self.start+self.limit])
+
+    def set_text(self,text):
         self.buf = text.split('\r\n')
         self.len = len(self.buf)
-        self.goto_line(0)
+        self.max = self.len - self.limit
 
-    def goto_line(self,num):
-        self.start = num
+    def display(self):
+        self.go_line(0)
+
+    def set_start(self,num):
+        self.start = max(0,min(num,self.max))
+
+    def move_up(self):
+        if self.start == 0 :
+            self.handle_finish(False)
+            return
+        self.set_start(self.start+1)
+        self.frame.write(ac.move0 + ac.insert1 + self.buf[self.start])
+        self.bottom_bar(fixed=True)
+
+    def move_down(self):
+        if self.max < self.len:
+            self.handle_finish(True)
+            return
+        if self.start == self.len :
+            return
+            self.handle_finish(True)
+        self.set_start(self.start-1)
+        self.frame.write(ac.kill_line + self.buf[self.start+self.limit])
+        self.bottom_bar(fixed=True)
+
+    def go_line(self,num):
+        self.set_start(num)
         self.frame.write(ac.move0 + ac.clear1 +
-                         '\r\n'.join(self.buf[num:num+self.limit]) +
-                         ac.move2(24,1))
-
+                         '\r\n'.join(self.buf[num:num+self.limit]))
+        self.bottom_bar(fixed=True)
+        
     def send(self,data):
         if data in self.key_maps :
             getattr(self,self.key_maps[data])()
 
-    def handle_last(self):
-        pass
+    def go_first(self):
+        self.go_line(0)
 
-    def handle_finish(self):
-        raise NotImplementedError
+    def go_last(self):
+        self.go_line(self.max)
 
-    def move_up(self):
-        if self.start == 0 :
-            return
-        self.start -= 1
-        self.frame.write(ac.move0 + ac.insert1 + self.buf[self.start])
-        self.handle_last()
-        
-    def move_down(self):
-        if self.start + self.limit >= self.len :
-            self.handle_finish()
-        self.frame.write(ac.kill_line + self.buf[self.start+self.limit]+'\r\n')
-        self.start += 1
+    def page_down(self):
+        self.go_line(self.start + self.limit)
+
+    def page_up(self):
+        self.go_line(self.start - self.limit)

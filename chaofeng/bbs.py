@@ -37,8 +37,20 @@ class Session:
 
     def set_charset(self,codecs):
         self.charset = codecs
-        
+
+class FrameMeta(type):
+
+    def __new__(cls,name,bases,attrs):
+        res = super(FrameMeta,cls).__new__(cls,name,bases,attrs)
+        res.__clsinit__()
+        return res
+
+    def __clsinit__(cls):
+        pass
+
 class Frame:
+
+    __metaclass__ = FrameMeta
 
     def __init__(self,server,sock,session):
         self.session = session
@@ -101,6 +113,9 @@ class Frame:
         if prompt is not None:
             self.write(prompt)
         self.read_secret()
+
+    def write_raw(self,data):
+        self.sock.send(data)
         
     def write(self,data):
         try:
@@ -210,12 +225,13 @@ class Server:
             session = Session()
             session.ip,session.port = sock.getpeername()
             session.shortcuts = {}
-            sock.send(ascii.CMD_CHAR_PER)
+            # sock.send(ascii.CMD_CHAR_PER)
             flag = True
             args = []
             kwargs = {}
             while flag:
                 try:
+                    print next_frame
                     now = next_frame(self,sock,session)
                     now.initialize(*args,**kwargs)
                     now.loop()
@@ -229,6 +245,7 @@ class Server:
                 except FrameInterrupt,e:
                     e.callback()
                 except Exception,e :
+                    traceback.print_exc()
                     try:
                         now.clear()
                     except:

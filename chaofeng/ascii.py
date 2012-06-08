@@ -136,6 +136,11 @@ CMD_LINEMODE = IAC+WONT+ECHO + IAC+WONT+SGA# + IAC+WILL+LINEMODE
 
 # Cursor
 
+move_up_n    = lambda l : '\x1b[%dA' % l
+move_down_n  = lambda l : '\x1b[%dB' % l
+move_right_n = lambda r : '\x1b[%dC' % r
+move_left_n  = lambda r : '\x1b[%dD' % r
+
 move0 = '\x1b[H'
 movex = lambda x : '\x1b[%d%c' % (abs(x),'D' if x<0 else 'C')
 movey = lambda y : '\x1b[%d%c' % (abs(y),'A' if y<0 else 'B')
@@ -153,6 +158,8 @@ clear_l = '\x1b[k'
 move2 = lambda x,y : '\x1b[%d;%dH' % (x,y)
 
 insert1 = '\x1b[1L'
+
+line_beginning = '\r'
 
 # KeyCode
 
@@ -203,6 +210,7 @@ ks_finish = ['\n','\r\n','\r\x00']
 backspace = k_left+ ' '+k_left
 
 kill_line = '\x1b[K'
+kill_to_end = '\x1b[K'
 
 import string
 
