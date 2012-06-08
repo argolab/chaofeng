@@ -5,34 +5,102 @@ class TextBuffer(BaseUI):
 
     key_maps = {}
 
-    def __init__(self,limit=23):
-        self.limit = limit
+    def __init__(self,height=24):
+        self.h = height  # the number of the screen height
+                         # notice that last line use to be bottom bar
+
+    def _move_to(self,l,r):
+        # if l > self.h or l < 0 or self.r <0 or self.r > self.getlen():
+            # raise
+        print (l,r)
+        self.write(ac.move2(l+1,r+1))
+
+    def bottom_bar(self):
+        self.write(ac.move2(self.h, 0) + 
+                   ac.kill_line + '%s(%d,%d)' % (self.getline(),self.l,self.r))
+        self._move_to(self.l-self.s, self.r)
 
     def init(self):
         self.buf=[[]]
-        self.l = 0
-        self.r = 0
-        self.s = 0
+        self.l = 0    # current line number
+        self.r = 0    # current row number
+        self.s = 0    # first visible line number
+
+    def getlines(self,f,t):
+        buf = map(lambda x: ''.join(x),
+                   self.buf[f:t])
+        l = len(self.buf)
+        if t > l :
+            buf.extend('~'*(t-l))
+        return buf
+
+    def getscreen(self):
+        return '\r\n'.join(map(lambda x: ''.join(x),
+                               self.getlines(self.l,self.l+self.h)))
 
     def new_line(self):
         self.buf[self.l:self.l]=[[]]
         self.r = 0
         self.write('\r' + ac.insert1)
-
-    def delete_line(self):
-        del self.buf[self.l]
-        # self.write(self.buf[self.l:
+        
+    def remove_whole_line(self):
+        if self.l:
+            del self.buf[self.l]
+            self.move_line_beginning()
+            self.write(ac.clear1)
+            self.write('\r\n'.join(self.getlines(self.l,self.s+self.h)))
 
     def total_line(self):
         return len(self.buf)
 
     def new_line_next(self):
-        self.buf[self.l+1:self.l+1]=[[]]
+        self.l += 1
         self.r = 0
-        self.write('\n\r' + ac.insert1)
+        self.write('\r\n'+ac.insert1)
+        self.buf[self.l:self.l]=[[]]
+        if self.l >= self.s + self.h - 1 :
+            self.roll_up(1)
 
     def write(self,data):
         self.frame.write(data)
+
+    def refresh_all(self):
+        self.write(self.getscreen())
+
+    ### many bug in roll
+
+    def roll_down(self,offset): # insert into head
+        ns = self.s - offset
+        if ns < 0 :
+            ns = 0
+            offset = self.s
+        if self.l < ns + self.h :
+            if offset == 0:
+                return
+            if offset < 10 :
+                self.write(ac.move0 + ac.insertn(offset))
+                self.write('\r\n'.join(self.getlines(ns,ns+offset)))
+                self.s = ns
+                self._move_to(self.l -ns, self.r)
+            elif offset > 0:
+                self.s = self.l
+                self.refresh_all()
+
+    def roll_up(self,offset): # append to tail
+        ns = min(self.s + offset, self.total_line())
+        if ns <= self.l:
+            if offset == 0 :
+                return
+            if offset < 10:
+                last = self.s + self.h - 1
+                self._move_to(self.h, 0)
+                self.write(ac.kill_line)
+                self.write('\r\n' + '\r\n'.join(self.getlines(last,last + offset)))
+                self.s = ns
+                self._move_to(self.l-ns, self.r)
+            elif offset > 0:
+                self.s = self.l
+                self.refresh_all()
 
     def earse_to_end(self):
         del self.buf[self.l][self.r:]
@@ -41,20 +109,43 @@ class TextBuffer(BaseUI):
     def replace_charlist(self,charlist):
         self.buf[self.l][self.r:] = charlist
         self.r += len(charlist)
+        charlist[0:0] = [ac.kill_line]
         self.write(''.join(charlist))
 
-    def move_up(self,offset=1):
-        if self.l >= self.offset :
-            self.l -= offset
-            self.write(ac.move_up_n(offset))
+    def _fix_cursor(self):
+        self.r = min(self.r, self.getlen())
+        self._move_to(self.l-self.s,self.r)
 
+    def move_up(self,offset=1):
+        if self.l >= offset :
+            self.l -= offset
+        else:
+            offset = self.l
+            self.l = 0
+        if self.l <= self.s :
+            self.roll_down(offset)
+        self._fix_cursor()
+
+    def goto_line(self,number):
+        number = max(0,min(number,self.total_line()))
+        if number > self.l :
+            self.move_down(number - self.l)
+        elif number < self.l:
+            self.move_up(self.l - number)
+            
     def move_down(self,offset=1):
-        if self.l + offset < self.total_line() :
+        length = self.total_line()
+        if self.l + offset < length :
             self.l += offset
-            self.write(ac.move_down_n(offset))
+        else:
+            offset = length - self.l
+            self.l = length - 1
+        if self.l + 1 >= self.s + self.h :
+            self.roll_up(offset)            
+        self._fix_cursor()
 
     def move_right(self,offset=1):
-        if self.r + offset <= len(self.getline()):
+        if self.r + offset <= self.getlen():
             self.r += offset
             self.write(ac.move_right_n(offset))
 
@@ -79,9 +170,6 @@ class TextBuffer(BaseUI):
     def getline_cursor(self):
         return self.buf[self.l][self.r:]
 
-    def getscreen(self):
-        return '\r\n'.join(lambda x: ''.join(x),self.buf)
-
     def replace(self,char):
         self.buf[self.l][self.r] = char
         self.write(char)
@@ -90,23 +178,35 @@ class TextEditor(TextBuffer):
 
     def insert_iter(self,char):
         d = self.getline_cursor()
+        l = len(d)
         d.insert(0,char)
         self.replace_charlist(d)
-        self.move_left(len(d)-1)
+        self.move_left(l)
+        self.bottom_bar()
+
+    def safe_insert_iter(self,char):
+        for c in char:
+            if c.isalnum():
+                self.insert_iter(c)
+
+    def insert_line_iter(self,charlist):
+        self.replace_charlist(charlist)
+        self.new_line_next()
+        self.bottom_bar()
 
     def new_line_iter(self):
         d = self.getline_cursor()
         self.earse_to_end()
-        self.move_down()
-        self.new_line()
+        self.new_line_next()
         self.replace_charlist(d)
+        self.move_line_beginning()
+        self.bottom_bar()
 
     def move_line_end_iter(self):
-        length = len(self.getline())
+        length = self.getlen()
         l,r = self.getlr()
-        print length
-        print r
         self.move_right(length-r)
+        self.bottom_bar()
         
     def move_left_iter(self):
         l,r = self.getlr()
@@ -115,34 +215,86 @@ class TextEditor(TextBuffer):
             self.move_line_end_iter()
         else:
             self.move_left()
+        self.bottom_bar()
 
     def move_right_iter(self):
         l,r = self.getlr()
-        length = len(self.getline())
+        length = self.getlen()
         if r == length :
             self.move_down()
             self.move_line_beginning()
         else:
             self.move_right()
+        self.bottom_bar()
 
-    def move_up_iter(self):
-        self.move_up()
+    def move_up_iter(self,offset=1):
+        self.move_up(offset=offset)
+        # self.bottom_bar()
 
-    def move_down_iter(self):
-        self.move_down()
+    def move_down_iter(self,offset=1):
+        self.move_down(offset=1)
+        self.bottom_bar()
 
     def move_line_beginning_iter(self):
         self.move_line_beginning()
+        self.bottom_bar()
 
     def kill_whole_line_iter(self):
         self.remove_whole_line()
+        self.bottom_bar()
 
     def kill_to_end_iter(self):
         d = self.getline_cursor()
         if d :
-            self.kill_to_end()
+            self.earse_to_end()
         else:
             self.remove_whole_line()
+        self.bottom_bar()
+
+    def backspace_iter(self):
+        if self.r <= 0 :
+            if self.l <= 0 :
+                return
+            d = self.getline()
+            self.remove_whole_line()
+            self.move_up()
+            self.move_line_end_iter()
+            self.replace_charlist(d)
+            self.move_left(len(d)-1)
+        else:
+            self.move_left()
+            d = self.getline_cursor()
+            del d[0]
+            self.replace_charlist(d)
+            self.move_left(len(d)-1)
+        self.bottom_bar()
+
+    def delete_iter(self):
+        if self.r >= self.getlen():
+            self.move_right_iter()
+            self.backspace_iter()
+        else:
+            d = self.getline_cursor()
+            del d[0]
+            self.replace_charlist(d)
+            self.move_left(len(d)-1)
+        self.bottom_bar()
+
+    def page_down_iter(self):
+        self.move_down(self.h)
+        self.bottom_bar()
+
+    def page_up_iter(self):
+        self.page_up(self.h)
+        self.bottom_bar()
+
+    def move_firstline_iter(self):
+        self.goto_line(0)
+        self.bottom_bar()
+
+    def move_lastline_iter(self):
+        self.goto_line(9999)
+        self.bottom_bar()        
 
 # class TextEditor(BaseUI):
 
