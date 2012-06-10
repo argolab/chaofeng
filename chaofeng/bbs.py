@@ -214,12 +214,10 @@ class Server:
         self.max_connect = max_connect
         self.sessions = []
         
-    def run(self,load_static=False):
+    def run(self):
 
         root = self.root
-        if load_static :
-            static.load()
-        
+
         def new_connect(sock,addr):
             next_frame = root
             session = Session()
@@ -229,36 +227,34 @@ class Server:
             flag = True
             args = []
             kwargs = {}
-            while flag:
-                try:
-                    print next_frame
-                    now = next_frame(self,sock,session)
-                    now.initialize(*args,**kwargs)
-                    now.loop()
-                    flag = False
-                except GotoInterrupt as e:
-                    next_frame = e.to_where
-                    args = e.args
-                    kwargs = e.kwargs
-                except EndInterrupt:
-                    break
-                except FrameInterrupt,e:
-                    e.callback()
-                except Exception,e :
-                    traceback.print_exc()
+            try:
+                while flag:
                     try:
+                        # print next_frame
+                        now = next_frame(self,sock,session)
+                        now.initialize(*args,**kwargs)
+                        now.loop()
+                        flag = False
+                    except GotoInterrupt as e:
                         now.clear()
-                    except:
-                        pass
-                    print 'Bad Ending [%s]' % session.ip
-                    traceback.print_exc()
-                    try:
-                        t = mark['bad_ending'](self,sock,session)
-                        t.bad_ending(e)
-                    except :
-                        traceback.print_exc()
-                        break
+                        next_frame = e.to_where
+                        args = e.args
+                        kwargs = e.kwargs
+            except EndInterrupt,e:
                 now.clear()
+                t = mark['finish'](self,sock,session)
+                t.finish(e)
+            except Exception,e :
+                print 'Bad Ending [%s]' % session.ip
+                traceback.print_exc()
+                try: now.clear()
+                except: traceback.print_exc()
+                try:
+                    t = mark['finish'](self,sock,session)
+                    t.bad_ending(e)
+                except :
+                    traceback.print_exc()
+            except : pass
             print 'End [%s]' % session.ip
                 
         s = self.sock

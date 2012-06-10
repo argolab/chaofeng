@@ -65,15 +65,12 @@ class TextBuffer(TextEditor_OX):
         self.s = 0    # first visible line number
 
     def bottom_bar(self):
-        self.write((ac.move2(self.h+1, 0) + 
-                   ac.kill_line + '%s(%d,%d){%d,%d}[%s,%s)' % (self.getline(),
-                                                               self.l,self.r,
-                                                               self.ml,self.mr,
-                                                               self.s, self.s+self.h))[:80])
-        self._fix_cursor()
+        self.write((ac.move2(self.h+1, 0) + ac.kill_line +
+                   '[%d,%d] %s' % (self.l,self.r, ''.join(self.getline())[:80])))
+        self.fix_cursor()
 
-    def write(self,data):
-        self.frame.write(data)
+    def write(self,char):
+        print char
         
     def getlines(self,f,t):
         buf = map(lambda x: ''.join(x),
@@ -86,6 +83,10 @@ class TextBuffer(TextEditor_OX):
     def getscreen(self):
         return '\r\n'.join(map(lambda x: ''.join(x),
                                self.getlines(self.s,self.s+self.h)))
+
+    def getall(self):
+        return '\r\n'.join(map(lambda x: ''.join(x),
+                               self.buf))
 
     def getselect(self,minl,minr,maxl,maxr):
         total = self.total_line()
@@ -112,7 +113,7 @@ class TextBuffer(TextEditor_OX):
                 del self.buf[self.l:last]
             self.write('\r\n'.join(self.getlines(self.l,self.s+self.h)))
             self.r = 0
-            self._fix_cursor()
+            self.fix_cursor()
 
     def insert_lines(self,buf):
         self.buf[self.l:self.l] = buf
@@ -120,7 +121,7 @@ class TextBuffer(TextEditor_OX):
         self.write(('\r'+ac.insert1))
         self.write(('\r'+ac.insert1).join(map(lambda x: ''.join(x),
                                               buf)))
-        self._fix_cursor()
+        self.fix_cursor()
 
     def total_line(self):
         return len(self.buf)
@@ -147,7 +148,7 @@ class TextBuffer(TextEditor_OX):
             self.write(ac.move0 + ac.insertn(offset) + '\r')
             self.write('\r\n'.join(self.getlines(start,self.s)))
             self.s = start
-            self._fix_cursor()
+            self.fix_cursor()
         elif (start > self.s) and (start <= self.s + 10):
             astart = self.s + self.h # Append Start
             self.write(ac.move2(self.h+1,0))
@@ -155,7 +156,7 @@ class TextBuffer(TextEditor_OX):
             self.write('\r\n'.join(self.getlines(astart, start + self.h)))
             self.write('\r\n')
             self.s = start
-            self._fix_cursor()
+            self.fix_cursor()
         else :
             self.s = start
             self.refresh_all()
@@ -168,7 +169,7 @@ class TextBuffer(TextEditor_OX):
         return reduce(lambda acc,obj: acc+self.char_width(obj),
                       self.buf[self.l][:self.r],1)
 
-    def _fix_cursor(self):
+    def fix_cursor(self):
         self.r = min(self.r, self.getlen())
         cr = self.visible_width()
         self.write(ac.move2(self.l-self.s+1, cr))
@@ -189,7 +190,7 @@ class TextBuffer(TextEditor_OX):
             self.l = 0
         if self.l <= self.s :
             self.set_start(self.l)
-        self._fix_cursor()
+        self.fix_cursor()
             
     def move_down(self,offset=1):
         if offset == 0:
@@ -201,7 +202,7 @@ class TextBuffer(TextEditor_OX):
             self.l = length - 1
         if self.l >= self.s + self.h :
             self.set_start(self.l - self.h + 1)
-        self._fix_cursor()
+        self.fix_cursor()
 
     def goto_pos(self,nl,nr):
         self.l = max(0,min(nl,self.total_line()-1))
@@ -210,20 +211,16 @@ class TextBuffer(TextEditor_OX):
             self.set_start(self.l)
         elif self.l>=self.s+self.h :
             self.set_start(max(0,self.l-self.h))
-        self._fix_cursor()
+        self.fix_cursor()
         
     def move_right(self,offset=1):
         if offset == 0 :
             return
         if self.r + offset <= self.getlen():
             self.r += offset
-            self._fix_cursor()
+            self.fix_cursor()
 
     def char_width(self,char):
-        if char in ac.printable :
-            return 1
-        if ac.is_chchar(char):
-            return 2
         return len(char)
     
     def move_left(self,offset=1):
@@ -231,7 +228,7 @@ class TextBuffer(TextEditor_OX):
             return
         if self.r >= offset :
             self.r -= offset
-            self._fix_cursor()
+            self.fix_cursor()
 
     def move_line_beginning(self):
         self.r = 0

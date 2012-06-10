@@ -54,11 +54,6 @@ class TextEditor_Edit(TextEditorModule):
         self.replace_charlist(d)
         self.move_left(l)
 
-    def safe_insert_iter(self,char):
-        for c in self.frame.u(''.join(char)):
-            if c in ac.printable or ac.is_chchar(c):
-                self.insert_iter(c)
-
     def insert_line_iter(self,charlist):
         self.replace_charlist(charlist)
         self.new_line_next()

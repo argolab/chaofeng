@@ -24,6 +24,18 @@ magenta = w(35)
 cyan    = w(36)
 white   = w(37)
 
+font = {
+    None:'',
+    "black":black,
+    "red":red,
+    "green":green,
+    "yellow":yellow,
+    "blue":blue,
+    "magenta":magenta,
+    "cyan":cyan,
+    "white":white,
+    }
+
 bg_black   = w(40)
 bg_red     = w(41)
 bg_green   = w(42)
@@ -34,10 +46,33 @@ bg_cyan    = w(46)
 bg_white   = w(47)
 bg_default = w(49)
 
+background = {
+    None:'',
+    "black":bg_black,
+    "red":bg_red,
+    "green":bg_green,
+    "yellow":bg_yellow,
+    "blue":bg_blue,
+    "magenta":bg_magenta,
+    "cyan":bg_cyan,
+    "white":bg_white,
+    "default":bg_default,
+    }
+
 bold       = w(1)
 underscore = w(4)
 inverted   = w(7)
 italic     = w(3)
+
+outlook = lambda *x : '\x1b[%sm' % ';'.join(x)
+
+art_code = {
+    "black":"30","red":"31","green":"32","yellow":"33","blue":"34",
+    "magenta":"35","cyan":"36","white":"37","default":"39",
+    "bg_black":"40","bg_red":"41","bg_green":"42","bg_yellow":"44","bg_blue":"44",
+    "bg_magenta":"45","bg_cyan":"46","bg_white":"47","bg_default":"49",
+    "bold":"1","underscore":"4","italic":"3","inverted":"7",
+    }
 
 # Control characters
 
@@ -151,6 +186,7 @@ movex_f = '\x1b[C'
 movex_d = '\x1b[D'
 save =    '\x1b[s'
 restore = '\x1b[u'
+clear0 = '\x1b[0j'
 clear1 = '\x1b[J'
 clear_2 =   '\x1b[2J'
 clear = move0 + clear_2
@@ -158,6 +194,7 @@ clear_l = '\x1b[k'
 move2 = lambda x,y : '\x1b[%d;%dH' % (x,y)
 
 insert1 = '\x1b[1L'
+insertn = lambda x : '\x1b[%dL' % x
 
 line_beginning = '\r'
 
@@ -176,6 +213,8 @@ k_end = '\x1b[4~'
 
 k_cp = lambda c : chr(ord(c)-96)
 k_ctrl_a = k_cp('a')
+k_ctrl_w = k_cp('w')
+k_ctrl_h = k_cp('h')
 k_ctrl_e = k_cp('e')
 k_ctrl_l = k_cp('l')
 k_ctrl_b = k_cp('b')
@@ -193,6 +232,11 @@ k_ctrl_v = k_cp('v')
 k_ctrl_t = k_cp('t')
 k_ctrl_y = k_cp('y')
 k_ctrl_x = k_cp('x')
+k_ctrl_k = k_cp('k')
+k_ctrl_f2 = '\x1b[12~'
+k_ctrl_S2 = '\x00'
+k_ctrl_S6 = '\x1e'
+k_ctrl_m = k_cp('m')
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'
@@ -200,6 +244,7 @@ k_c_h = '\x08'
 k_c_p = k_cp('p')
 
 k_del = chr(127)
+k_delete = '\x1b[3~'
 k_backspace = chr(8)
 
 k_enter_linux = chr(13)
@@ -214,6 +259,13 @@ kill_to_end = '\x1b[K'
 
 import string
 
-printable = [chr(x) for x in range(32,127)]
+printable = set(chr(x) for x in range(32,127))
 
 is_chchar = lambda data : all( c >= u'\u4e00' and c <= u'\u9fa5' for c in data)
+is_safe_char = lambda data : \
+    (data[0] >= u' ')  and \
+    ((data[0] <= u'~') or (data[0] > u'\xff'))
+
+from unicodedata import east_asian_width
+
+srcwidth = lambda x : 2 if east_asian_width(x) in "FAW" else 1

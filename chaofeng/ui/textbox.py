@@ -77,62 +77,73 @@ class SingleTextBox(BaseTextBox):
 
 class LongTextBox(BaseTextBox):
 
+    '''
+    Widget for view long text.
+    When user try move_up in first will,self.handle_finish(False)
+    will be called, and self.handle_finish(True) will be when
+    move_down in last lin.
+    '''
+
     key_maps = {
         ac.k_down : "move_down",
         ac.k_up : "move_up",
         }
 
-    def __init__(self,limit=23):
-        self.limit=limit
+    def __init__(self,height=23):
+        self.h = height
         self.buf = None
         
     def init(self,text=None):
         if text is not None:
             self.set_text(text)
 
-    def bind(self,bottom_bar,callback):
+    def bind(self,callback):
         self.handle_finish = callback
-        self.bottom_bar = bottom_bar
 
-    @property
-    def screen(self):
-        return '\r\n'.join(self.buf[self.start:self.start+self.limit])
+    def getscreen(self):
+        return '\r\n'.join(self.getlines(self.s, self.s+self.h))
 
     def set_text(self,text):
-        self.buf = text.split('\r\n')
+        self.buf = text.splitlines()
+        self.s = 0
         self.len = len(self.buf)
-        self.max = self.len - self.limit
+        self.maxs = max(0,self.len - self.h)
+        
+    def getlines(self,f,t):
+        if t > self.len :
+            return self.buf[f:t]+['~',]*(t-self.len)
+        else:
+            return self.buf[f:t]
 
-    def display(self):
-        self.go_line(0)
-
-    def set_start(self,num):
-        self.start = max(0,min(num,self.max))
+    def set_start(self,start):
+        if start == self.s:
+            return
+        if (self.s > start) and (self.s <= start + 10):
+            offset = self.s - start
+            self.write(ac.move0 + ac.insertn(offset) + '\r')
+            self.write('\r\n'.join(self.getlines(start,self.s)))
+            self.s = start
+        elif (start > self.s) and (start <= self.s + 10):
+            astart = self.s + self.h # Append Start
+            self.write(ac.move2(self.h+1,0))
+            self.write(ac.kill_line)
+            self.write('\r\n'.join(self.getlines(astart, start + self.h)))
+            self.write('\r\n')
+            self.s = start
+        else :
+            self.s = start
+            self.refresh_all()
 
     def move_up(self):
-        if self.start == 0 :
-            self.handle_finish(False)
-            return
-        self.set_start(self.start+1)
-        self.frame.write(ac.move0 + ac.insert1 + self.buf[self.start])
-        self.bottom_bar(fixed=True)
-
+        if self.s :
+            self.set_start(self.s-1)
+            
     def move_down(self):
-        if self.max < self.len:
-            self.handle_finish(True)
-            return
-        if self.start == self.len :
-            return
-            self.handle_finish(True)
-        self.set_start(self.start-1)
-        self.frame.write(ac.kill_line + self.buf[self.start+self.limit])
-        self.bottom_bar(fixed=True)
+        if self.s + self.h < self.len:
+            self.set_start(self.s+1)
 
     def go_line(self,num):
-        self.set_start(num)
-        self.frame.write(ac.move0 + ac.clear1 +
-                         '\r\n'.join(self.buf[num:num+self.limit]))
-        self.bottom_bar(fixed=True)
+        self.set_start(max(0,min(num,self.len-self.h)))
         
     def send(self,data):
         if data in self.key_maps :
@@ -142,10 +153,17 @@ class LongTextBox(BaseTextBox):
         self.go_line(0)
 
     def go_last(self):
-        self.go_line(self.max)
+        self.go_line(self.len-self.h)
 
     def page_down(self):
-        self.go_line(self.start + self.limit)
+        self.go_line(self.s - self.h)
 
     def page_up(self):
-        self.go_line(self.start - self.limit)
+        self.go_line(self.s + self.h)
+
+    def refresh_all(self):
+        self.write(ac.move0 + ac.clear)
+        self.write(self.getscreen())
+        
+    def write(self,data):
+        self.frame.write(data)

@@ -1,13 +1,9 @@
 __metaclass__ = type
 
 from chaofeng.ascii import *
-from string import Template
-from os import walk as os_walk
-from os import path as os_path
-from os.path import basename as os_basename
+import os.path
 
-import re
-import codecs
+import codecs,traceback
 
 class Proxyer(dict):
     '''
@@ -23,66 +19,39 @@ class Proxyer(dict):
 # global dict of frame
 mark = Proxyer()
 
-# Normal file map 
-f_map = Proxyer()
+class StaticProxyer:
 
-@f_map('.seq')
-def load_seq(f):
-    return [ x[:-1] for x in f.readlines()]
-
-@f_map('.txt')
-def load_str(f):
-    return u'\r'.join(f.readlines())[:-1]
-
-@f_map('.tpl')
-def load_templete(f):
-    la = f.readlines()
-    if '----\n' in la : la = la[la.index('----\n')+1:]
-    txt = u'\r'.join(la)[:-1]
-    return Template(move2(0,0)+clear+txt)
-
-@f_map('.ani')
-def load_animation(f):
-    buf = []
-    v = []
-    for line in f :
-        if line.startswith('----') :
-            d = re.match('---- ([0-9]*)',line).group(1)
-            d = int(d)
-            v.append(('\r'.join(buf),d))
-            buf = []
-        else :
-            buf.append(line)
-    return v
-
-class StaticProxyer(Proxyer):
     '''
     Load the static resouce.
     '''
-    
-    def load(self,path='./static',file_map=None,encoding="utf8",mode="r"):
-        path = os_path.normpath(path)
-        if file_map == None :
-            file_map = f_map
-        for root,dirs,files in os_walk(path):
-            for filename in files :
-                (name,suf) = os_path.splitext(filename)
-                prefix = root[len(path)+1:]
-                if suf in file_map:
-                    with codecs.open(root+'/'+filename,mode,encoding=encoding) as f :
-                        self[os_path.join(prefix,name)]=file_map[suf](f)
 
-static = StaticProxyer()
-static.load()
+    def __init__(self,**kwargs):
+        self.loader = {}
+        self.dict = {}
+        self.config(**kwargs)
+        
+    def config(self,root=None,loader=None,encoding="utf8"):
+        if root :
+            self.root = os.path.normpath(root)
+        if loader : 
+            self.loader.update(loader)
+        if encoding :
+            self.encoding=encoding
+        
+    def _load(self,key):
+        for suf in self.loader :
+            fpath = os.path.join(self.root,key + suf)
+            if os.path.exists(fpath) :
+                with codecs.open(fpath,encoding=self.encoding) as f:
+                    self.dict[key] = self.loader[suf](f)
+                    return self.dict[key]
+        raise ValueError,"No available file for %s" % key
 
-_s = lambda s : s.encode('gbk') if isinstance(s,unicode) else s
-_u = lambda s : s.decode('gbk')
+    def __getitem__(self,key):
+        return self.dict.get(key) or self._load(key)
 
-def _d(format_str,obj):
-    n_obj = dict( (key, obj[key].encode('gbk') if\
-                       isinstance(obj[key],unicode) else obj[key] ) for key in obj )
-    return ( format_str.encode('gbk') % n_obj).decode('gbk')
+import default_config
 
-def _w(format_str,*obj):
-    n_obj = tuple( i.encode('gbk') if isinstance(i,unicode) else i for i in obj )
-    return ( format_str.encode('gbk') % n_obj ).decode('gbk')
+setting = default_config.static
+
+static = StaticProxyer(**setting)

@@ -1,5 +1,5 @@
 from Table import BaseTable,SimpleTable
-from TextEditor import StrongTextEditor
+from texteditor import TextEditor 
 from textbox import SingleTextBox,Animation,LongTextBox
 
 from baseui import BaseUI
