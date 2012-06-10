@@ -7,51 +7,63 @@ class BaseTable(BaseUI):
         self.start_line = start_line
         self.limit = limit
 
-    def init(self,getdata=None,fformat=None,default=0,refresh=False):
-        self.max = 0
-        self.setup(getdata,fformat,default,refresh)
-        
-    def setup(self,getdata=None,fformat=None,default=None,refresh=True):
-        if getdata is not None:
+    def init(self,default=0):
+        self.s = 0
+        self.max = None
+        self.hover = default
+        self.default = default
+
+    def set_fun(self,getdata=None,fformat=None,refresh=True):
+        if getdata:
             self.getdata = getdata
-        if fformat is not None:
+        if fformat:
             self.fformat = fformat
-        if default is not None:
-            self.default = default
-            self.hover = default
-        if refresh is True:
-            self.refresh()
+        if refresh:
+            self.goto(self.default)
 
     def fetch(self):
-        return self.data[self.hover]
+        return self.data[self.hover-self.s]
 
-    def refresh(self):
-        if self.hover < 0 :
-            return
-        pos = self.hover % self.limit
-        start = self.hover - pos
-        self.data = self.getdata(start,self.limit)
-        buf = map(self.fformat, self.data)
+    def refresh(self,data=None):
+        if data is None:
+            data = self.getdata(self.s, self.limit)
+        buf = map(self.fformat, data)
         l = len(buf)
-        if l < self.limit :
+        if l < self.limit:
             buf.extend([ac.kill_line]*(self.limit -l))
-        self.max = start + l - 1
-        self.start = start
+        self.data = data
         self.frame.write(ac.move2(self.start_line,0))
-        self.frame.write(u'\r\n'.join(buf))
-        self.frame.write(ac.move2(self.start_line+pos,0)+'>')
+        self.frame.write('\r\n'.join(buf))
+        self.refresh_cursor()
 
     def refresh_cursor(self):
         pos = self.hover % self.limit
-        self.frame.write(ac.move2(self.start_line + pos,0) + '>')
+        self.frame.write(ac.movex_d + ' ' +
+                         ac.move2(self.start_line + pos,0) + '>')
 
-    def goto(self,which):
-        self.hover = min(max(which,0),self.max)
-        self.refresh()
+    def goto(self, n):
+        if n < 0 :
+            n = 0
+        pos = n % self.limit
+        s = n - pos
+        if s == self.s and self.max :
+            self.hover = min(n,self.max)
+            self.refresh_cursor()
+            return
+        data = self.getdata(s, self.limit)
+        l = len(data)
+        if not l :
+            return
+        self.data = data
+        self.max = s + l -1
+        if n > self.max:
+            n = self.max
+        self.hover = n
+        self.s = s
+        self.refresh(data=data)
 
-    def goto_offset(self,offset):
-        self.hover = min(max(self.hover + offset,0),self.max)
-        self.refresh()
+    def goto_offset(self,n):
+        self.goto(self.hover + n)
 
 class SimpleTable(BaseTable):
 
@@ -68,16 +80,16 @@ class SimpleTable(BaseTable):
             getattr(self,self.key_maps[data])()
 
     def move_down(self):
-        self.goto_offset(1)
+        self.goto(self.hover+1)
 
     def move_up(self):
-        self.goto_offset(-1)
+        self.goto(self.hover-1)
 
     def page_down(self):
-        self.goto_offset(self.limit)
+        self.goto(self.hover+self.limit)
         
     def page_up(self):
-        self.goto_offset(-self.limit)
+        self.goto(self.hover-self.limit)
 
     def go_first(self):
         self.goto(0)

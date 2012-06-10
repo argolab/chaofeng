@@ -107,7 +107,7 @@ class LongTextBox(BaseTextBox):
         self.buf = text.splitlines()
         self.s = 0
         self.len = len(self.buf)
-        self.maxs = max(0,self.len - self.h)
+        self.max = max(0,self.len - self.h)
         
     def getlines(self,f,t):
         if t > self.len :
@@ -137,12 +137,20 @@ class LongTextBox(BaseTextBox):
     def move_up(self):
         if self.s :
             self.set_start(self.s-1)
+        else:
+            self.handle_finish(False)
             
     def move_down(self):
         if self.s + self.h < self.len:
             self.set_start(self.s+1)
+        else:
+            self.handle_finish(True)
 
     def go_line(self,num):
+        if self.s == 0 and num < 0 :
+            self.handle_finish(True)
+        if self.s == self.max and num > 0:
+            self.handle_finish(False)
         self.set_start(max(0,min(num,self.len-self.h)))
         
     def send(self,data):

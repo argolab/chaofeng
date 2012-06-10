@@ -24,6 +24,8 @@ magenta = w(35)
 cyan    = w(36)
 white   = w(37)
 
+delay = lambda x : '\x1b[%dM' % x
+
 font = {
     None:'',
     "black":black,
@@ -63,6 +65,7 @@ bold       = w(1)
 underscore = w(4)
 inverted   = w(7)
 italic     = w(3)
+blink      = w(5)
 
 outlook = lambda *x : '\x1b[%sm' % ';'.join(x)
 
@@ -71,7 +74,7 @@ art_code = {
     "magenta":"35","cyan":"36","white":"37","default":"39",
     "bg_black":"40","bg_red":"41","bg_green":"42","bg_yellow":"44","bg_blue":"44",
     "bg_magenta":"45","bg_cyan":"46","bg_white":"47","bg_default":"49",
-    "bold":"1","underscore":"4","italic":"3","inverted":"7",
+    "bold":"1","underscore":"4","italic":"3","inverted":"7","blink":"5",
     }
 
 # Control characters
@@ -237,6 +240,7 @@ k_ctrl_f2 = '\x1b[12~'
 k_ctrl_S2 = '\x00'
 k_ctrl_S6 = '\x1e'
 k_ctrl_m = k_cp('m')
+k_ctrl_be = '\x1c'
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'
