@@ -169,7 +169,7 @@ SEND = chr(1)
 
 # Wrap for command
 
-CMD_CHAR_PER =  IAC+WILL+SGA + IAC+WILL+ECHO
+CMD_CHAR_PER =  IAC+WILL+ECHO + IAC+WILL+SGA + IAC+DO+BINARY
 CMD_LINEMODE = IAC+WONT+ECHO + IAC+WONT+SGA# + IAC+WILL+LINEMODE
 
 # Cursor
@@ -234,13 +234,14 @@ k_ctrl_s = k_cp('s')
 k_ctrl_v = k_cp('v')
 k_ctrl_t = k_cp('t')
 k_ctrl_y = k_cp('y')
+k_ctrl_q = k_cp('q')
 k_ctrl_x = k_cp('x')
 k_ctrl_k = k_cp('k')
 k_ctrl_f2 = '\x1b[12~'
 k_ctrl_S2 = '\x00'
 k_ctrl_S6 = '\x1e'
 k_ctrl_m = k_cp('m')
-k_ctrl_be = '\x1c'
+k_ctrl_be = '\x1c'  # '\'
 k_c_a = '\x01'
 k_c_b = '\x02'
 k_c_c = '\x03'
@@ -254,7 +255,7 @@ k_backspace = chr(8)
 k_enter_linux = chr(13)
 k_enter_window = chr(10)
 
-ks_finish = ['\n','\r\n','\r\x00']
+ks_finish = set(('\n','\r\n','\r','\r\x00'))
 
 backspace = k_left+ ' '+k_left
 

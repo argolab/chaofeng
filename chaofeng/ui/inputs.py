@@ -34,8 +34,9 @@ class BaseInput(BaseUI):
     def send(self,data):
         if data in self.key_maps :
             getattr(self,self.key_maps[data])()
-        if len(self.buffer) < self.buffer_size and self.acceptable(data) :
-            self.push(data)
+        else:
+            if len(self.buffer) < self.buffer_size and self.acceptable(data) :
+                self.push(data)
 
     def delete(self):
         if self.buffer :
@@ -50,10 +51,10 @@ class BaseInput(BaseUI):
         self.init()
         while True :
             data = self.frame.read()
-            if data in termitor :
-                break
-            self.send(data)
-        return self.fetch()
+            for char in data :
+                if char in termitor :
+                    return self.fetch()
+                self.send(char)
 
     def readln(self,prompt=None,termitor=ac.ks_finish):
         res = self.read(prompt,termitor)

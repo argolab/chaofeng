@@ -10,7 +10,7 @@ from eventlet import Timeout
 from eventlet.greenthread import sleep
 from eventlet import spawn_after as setTimeout
 from eventlet import spawn as launch
-from chaofeng.bbs import Server,Frame,BindFrame,EndInterrupt,LocalFrame
+from chaofeng.bbs import Server,Frame,EndInterrupt
 import chaofeng.ascii
 import chaofeng.ui
 import chaofeng.g

@@ -1,6 +1,7 @@
 __metaclass__ = type
 
 import eventlet
+from eventlet.green import socket
 from chaofeng import ascii
 from chaofeng.g import static,mark
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
@@ -91,6 +92,14 @@ class Frame:
         while True :
             self.read()
 
+    def msg(self,msg,*args):
+        if self.debuglevel > 0:
+            print 'CONN(%s, %s):' % (self.session,ip, self.session.port)
+            if args :
+                print msg % args
+            else:
+                print msg
+
     def read(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
         if not data :
@@ -115,9 +124,13 @@ class Frame:
         self.read_secret()
 
     def write_raw(self,data):
+        # if IAC in data:
+            # data = data.replace(IAC, IAC+IAC)
         self.sock.send(data)
         
     def write(self,data):
+        # if IAC in data:
+            # data = data.replace(IAC, IAC+IAC)
         try:
             self.sock.send(self.s(data))
         except Exception,e:
@@ -156,60 +169,10 @@ class Frame:
     def fm(self,format_str,d_tuple):
         return format_str % d_tuple
 
-import termios, sys, os
-
-class LocalFrame(Frame):
-
-    def __init__(self):
-        self._loading = []
-
-    def _read(self):
-        TERMIOS = termios
-        fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd)
-        new = termios.tcgetattr(fd)
-        new[3] = new[3] & ~TERMIOS.ICANON & ~TERMIOS.ECHO
-        new[6][TERMIOS.VMIN] = 1
-        new[6][TERMIOS.VTIME] = 0
-        termios.tcsetattr(fd, TERMIOS.TCSANOW, new)
-        c = None
-        try:
-            c = os.read(fd, 1024)
-        finally:
-            termios.tcsetattr(fd, TERMIOS.TCSAFLUSH, old)
-        return c
-
-    def read(self,buffer_size=1024):
-        data = self._read()
-        if not data :
-            self.close()
-        else:
-            if self.get : self.get(data)
-            try:
-                data = self.u(data)
-            except: pass
-            return data
-
-    def read_secret(self,buffer_size=1024):
-        data = self._read()
-        if not data :
-            self.close()
-        else:
-            return data
-
-class BindFrame(Frame):
-
-    def get(self,data):
-        super(BindFrame,self).get(data)
-        action = self.shortcuts.get(data)
-        if action and hasattr(self,'do_'+action) :
-            getattr(self,'do_'+action)()
-
 class Server:
 
     def __init__(self,root,host='0.0.0.0',port=5000,max_connect=5000):
         self.sock  = eventlet.listen((host,port))
-        self._pool = eventlet.GreenPool(max_connect)
         self.root  = root
         self.max_connect = max_connect
         self.sessions = []
@@ -223,7 +186,7 @@ class Server:
             session = Session()
             session.ip,session.port = sock.getpeername()
             session.shortcuts = {}
-            # sock.send(ascii.CMD_CHAR_PER)
+            sock.send(ascii.CMD_CHAR_PER)
             flag = True
             args = []
             kwargs = {}
@@ -259,6 +222,6 @@ class Server:
                 
         s = self.sock
         try:
-            eventlet.serve(s,new_connect)
+            eventlet.serve(s,new_connect,concurrency=self.max_connect)
         except KeyboardInterrupt:
             pass

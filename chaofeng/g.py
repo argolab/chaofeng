@@ -38,7 +38,7 @@ class StaticProxyer:
         if encoding :
             self.encoding=encoding
         
-    def _load(self,key):
+    def load(self,key):
         for suf in self.loader :
             fpath = os.path.join(self.root,key + suf)
             if os.path.exists(fpath) :
@@ -48,7 +48,7 @@ class StaticProxyer:
         raise ValueError,"No available file for %s" % key
 
     def __getitem__(self,key):
-        return self.dict.get(key) or self._load(key)
+        return self.dict.get(key) or self.load(key)
 
 import default_config
 

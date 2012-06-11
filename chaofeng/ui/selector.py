@@ -70,6 +70,10 @@ class ColMenu(BaseUI):
     def refresh_cursor(self):
         self.frame.write(ac.backspace+' '+ac.move2(*self.pos[self.hover])+'>')
 
+    def send_shortcuts(self,data):
+        if data in self.shortcuts :
+            self.move_to(self.shortcuts[data])
+
     def send(self,data):
         if data in self.key_maps and hasattr(self,self.key_maps[data]) :
             getattr(self,self.key_maps[data])()
@@ -91,14 +95,16 @@ class ColMenu(BaseUI):
             next_s = self.hover - self.height
             if next_s >= 0 :
                 self.hover = next_s
-            self.refresh_cursor()
+                self.refresh_cursor()
+                return True
 
     def move_right(self):
         if self.height :
             next_s = self.hover + self.height
             if next_s < self.len :
                 self.hover = next_s
-            self.refresh_cursor()
+                self.refresh_cursor()
+                return True
 
     def move_to(self,which):
         self.hover = which

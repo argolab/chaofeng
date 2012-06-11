@@ -94,6 +94,8 @@ class TextEditor_Edit(TextEditorModule):
 
     def delete_iter(self):
         if self.r >= self.getlen():
+            if self.l+1 >= self.total_line():
+                return
             l,r = self.getlr()
             self.goto_pos(self.l+1,0)
             d = self.getline()

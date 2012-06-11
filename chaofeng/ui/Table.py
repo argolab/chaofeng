@@ -22,7 +22,7 @@ class BaseTable(BaseUI):
             self.goto(self.default)
 
     def fetch(self):
-        return self.data[self.hover-self.s]
+        return self.data and self.data[self.hover-self.s]
 
     def refresh(self,data=None):
         if data is None:
@@ -30,23 +30,23 @@ class BaseTable(BaseUI):
         buf = map(self.fformat, data)
         l = len(buf)
         if l < self.limit:
-            buf.extend([ac.kill_line]*(self.limit -l))
+            buf.extend(['']*(self.limit -l))
         self.data = data
-        self.frame.write(ac.move2(self.start_line,0))
-        self.frame.write('\r\n'.join(buf))
+        self.frame.write(ac.move2(self.start_line,1)+ac.kill_line)
+        self.frame.write(('\r\n'+ac.kill_line).join(buf))
         self.refresh_cursor()
 
     def refresh_cursor(self):
         pos = self.hover % self.limit
         self.frame.write(ac.movex_d + ' ' +
-                         ac.move2(self.start_line + pos,0) + '>')
+                         ac.move2(self.start_line + pos,1) + '>')
 
     def goto(self, n):
         if n < 0 :
             n = 0
         pos = n % self.limit
         s = n - pos
-        if s == self.s and self.max :
+        if s == self.s and self.max is not None:
             self.hover = min(n,self.max)
             self.refresh_cursor()
             return

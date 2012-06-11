@@ -103,6 +103,10 @@ class LongTextBox(BaseTextBox):
     def getscreen(self):
         return '\r\n'.join(self.getlines(self.s, self.s+self.h))
 
+    def getscreen_with_raw(self):
+        buf = self.getlines(self.s, self.s+self.h)
+        return ('\r\n'.join(buf), buf)
+
     def set_text(self,text):
         self.buf = text.splitlines()
         self.s = 0
