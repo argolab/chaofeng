@@ -57,12 +57,17 @@ class TextBuffer(TextEditor_OX):
         for mod in cls.__textmodule__ :
             mod.__modinit__()
 
-    def init_buf(self,**kwargs):
+    def init_buf(self,buf=None,r=0,l=0,s=0,**kwargs):
         self.kwargs = kwargs
-        self.buf=[[]]
-        self.l = 0    # current line number
-        self.r = 0    # current row number
-        self.s = 0    # first visible line number
+        self.buf = buf or [[]]
+        self.l = l    # current line number
+        self.r = r    # current row number
+        self.s = s    # first visible line number
+
+    @property
+    def status(self):
+        return dict(buf=self.buf,
+                    l=self.l, r=self.r, s=self.s)
 
     def bottom_bar(self):
         self.write((ac.move2(self.h+1, 0) + ac.kill_line +
