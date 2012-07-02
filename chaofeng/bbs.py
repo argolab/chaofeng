@@ -8,19 +8,34 @@ from chaofeng.g import static,mark
 import traceback
 import sys
 
-class GotoInterrupt(Exception):
+class TravelInterrupt(Exception):
+    pass
+
+class GotoInterrupt(TravelInterrupt):
     
     def __init__(self,to_where,args,kwargs):
         self.to_where = to_where
         self.args = args
         self.kwargs = kwargs
 
+    def build(self, server, sock, session):
+        return self.to_where(server, sock, session)
+
+    def work(self, f):
+        f.initialize(*self.args, **self.kwargs)
+
+class WakeupInterrupt(TravelInterrupt):
+
+    def __init__(self,frame):
+        self.f = frame
+
+    def build(self, server, sock, session):
+        return self.f
+
+    def work(self, f):
+        f.restore()
+
 class EndInterrupt(Exception): pass
-
-class FrameInterrupt(Exception):
-
-    def __init__(self,callback_name):
-        self.callback_name = callback_name
 
 class BadEndInterrupt(Exception): pass
 
@@ -88,6 +103,9 @@ class Frame:
     def fetch(self):
         pass
 
+    def run(self):
+        pass
+
     def loop(self):
         while True :
             self.read()
@@ -140,15 +158,23 @@ class Frame:
 
     def writeln(self,data=''):
         self.write(data + '\r\n')
-            
-    def raw_goto(self,where,*args,**kwargs):
+
+    def _clear(self):
         for s in self._subframe : s.clear()
         for u in self._loading : u.clear()
+            
+    def raw_goto(self,where,*args,**kwargs):
+        self._clear()
         self.clear()
         raise GotoInterrupt(where,args,kwargs)
 
     def goto(self,where_mark,*args,**kwargs):
         self.raw_goto(mark[where_mark],*args,**kwargs)
+
+    def wakeup(self,frame):
+        self._clear()
+        self.clear()
+        raise WakeupInterrupt(frame)
 
     def close(self):
         for s in self._subframe : s.clear()
@@ -180,32 +206,30 @@ class Server:
     def run(self):
 
         root = self.root
+        finish_frame = mark['finish']
 
         def new_connect(sock,addr):
-            next_frame = root
             session = Session()
             session.ip,session.port = sock.getpeername()
             session.shortcuts = {}
             sock.send(ascii.CMD_CHAR_PER)
-            flag = True
-            args = []
-            kwargs = {}
+
+            runner = GotoInterrupt(root,(),{})
+            
             try:
-                while flag:
+                while True:
                     try:
-                        # print next_frame
-                        now = next_frame(self,sock,session)
-                        now.initialize(*args,**kwargs)
+                        now = runner.build(self, sock, session)
+                        runner.work(now)
                         now.loop()
-                        flag = False
-                    except GotoInterrupt as e:
+                    except TravelInterrupt as e:
                         now.clear()
-                        next_frame = e.to_where
-                        args = e.args
-                        kwargs = e.kwargs
+                        runner = e
+                    else:
+                        raise EndInterrupt
             except EndInterrupt,e:
                 now.clear()
-                t = mark['finish'](self,sock,session)
+                t = finish_frame(self,sock,session)
                 t.finish(e)
             except Exception,e :
                 print 'Bad Ending [%s]' % session.ip
@@ -213,7 +237,7 @@ class Server:
                 try: now.clear()
                 except: traceback.print_exc()
                 try:
-                    t = mark['finish'](self,sock,session)
+                    t = finish_frame(self,sock,session)
                     t.bad_ending(e)
                 except :
                     traceback.print_exc()
