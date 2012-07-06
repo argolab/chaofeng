@@ -3,6 +3,24 @@ from baseui import BaseUI
 
 class BaseTable(BaseUI):
 
+    def __init__(self,start_line=0,height=20):
+        self.start_line = start_line
+        self.height = height
+
+    def init(self,data_loader):
+        pass
+
+    def fetch(self):
+        return self.s + self.hover
+
+    def set_lbound(self,lower):
+        pass
+
+    def set_ubound(self,upper):
+        pass
+
+class BaseTable(BaseUI):
+
     def __init__(self,start_line=0,limit=20):
         self.start_line = start_line
         self.limit = limit
@@ -46,6 +64,7 @@ class BaseTable(BaseUI):
             n = 0
         pos = n % self.limit
         s = n - pos
+        print '%s:%s %s' %(s,self.s,self.max)
         if s == self.s and self.max is not None:
             self.hover = min(n,self.max)
             self.refresh_cursor()

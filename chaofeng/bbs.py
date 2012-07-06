@@ -2,8 +2,11 @@ __metaclass__ = type
 
 import eventlet
 from eventlet.green import socket
+from eventlet import tpool
+from eventlet.timeout import Timeout 
 from chaofeng import ascii
 from chaofeng.g import static,mark
+import functools 
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 import traceback
 import sys
@@ -38,6 +41,8 @@ class WakeupInterrupt(TravelInterrupt):
 class EndInterrupt(Exception): pass
 
 class BadEndInterrupt(Exception): pass
+
+
 
 class Session:
 
@@ -249,3 +254,42 @@ class Server:
             eventlet.serve(s,new_connect,concurrency=self.max_connect)
         except KeyboardInterrupt:
             pass
+
+# def asynchronous(f):
+#     @functools.wraps(f)
+#     def wrapper(*args,**kwargs):
+#         e = eventlet.event.Event()
+#         def inner_exec():
+#             res = f(*args,**kwargs)
+#             e.send(res)
+#         res = e.wait()
+#         return res
+#     return wrapper
+
+class AsyncTimeLimitError(Exception):pass
+
+def asynchronous(f):
+    return asynchronous_t(3)(f)
+
+def asynchronous_t(max_delay):
+    def _(f):
+        @functools.wraps(f)
+        def wrapper(*args,**kwargs):
+            with Timeout( max_delay, AsyncTimeLimitError):
+                return tpool.execute(f, *args, **kwargs)
+        return wrapper
+    return _
+
+def asynchronous_n(max_retry):
+    def _(f):
+        @functools.wraps(f)
+        def wrapper(*args,**kwargs):
+            for i in range(max_retry):
+                try:
+                    return f(*args,**kwargs)
+                except AsyncTimeLimitError:
+                    pass
+            else:
+                raise AsyncTimeLimitError
+        return wrapper
+    return _
