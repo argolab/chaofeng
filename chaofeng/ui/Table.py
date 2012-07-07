@@ -3,18 +3,25 @@ from baseui import BaseUI
 
 class DataLoader:
 
+    def __init__(self,get_raw,format,upper):
+        self.get_raw = get_raw
+        self.format = format
+        self.upper = upper  #######################################################
+
+    def fix_range(self,x):
+        return min(self.upper,max(0,x))
+
     def get(self, start, limit):
-        data = self.get_raw(start, limit)
+        self.raw_data = self.get_raw(start, limit)
+        data = map(self.format,
+                   self.raw_data)
         l = len(data)
         if l < limit:
             data.extend(['']*(limit-l))
         return data
 
-    def get_raw(self, start, limit):
-        raise NotImplementedError
-
-    def format(self, data):
-        raise NotImplementedError
+    def item(self,key):
+        return self.raw_data[key]
 
 class PagedTable(BaseUI):
 
@@ -23,22 +30,20 @@ class PagedTable(BaseUI):
         self.page_limit = page_limit
 
     def init(self, default, data_loader):
-        (self.page, self.op) = divmod(default, page_limit)
+        (self.page, self.op) = divmod(default, self.page_limit)
         self.data_loader = data_loader
         self.data = []
         
     def fetch(self):
-        return self.data[self.op]
+        return self.data_loader.raw_data[self.op]
 
     @property
     def hover(self):
         return (self.page * self.page_limit) + self.op
 
-    def refresh(self):
-        self.data = self.data_loader.get(self.page, self.page_limit)
-        buf = [ac.move2(self.start_line, 1)]
-        buf.extend(map(self.data_loader.format,
-                       self.data))
+    def restore(self):
+        buf = self.data_loader.get(self.page, self.page_limit)
+        self.frame.write(ac.move2(self.start_line, 1)+ac.kill_line)
         self.frame.write( ('\r\n'+ac.kill_line).join(buf))
         self.refresh_cursor()
 

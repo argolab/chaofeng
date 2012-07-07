@@ -42,6 +42,8 @@ class EndInterrupt(Exception): pass
 
 class BadEndInterrupt(Exception): pass
 
+
+
 class Session:
 
     def __init__(self,codecs='gbk'):
@@ -154,15 +156,10 @@ class Frame:
             # data = data.replace(IAC, IAC+IAC)
         try:
             self.sock.send(self.s(data))
-        except IOError,e :
-            traceback.print_exc()
-            self.close()
         except Exception,e:
             print e
             traceback.print_exc()
             self.close()
-        except:
-            traceback.print_exc()
 
     def writeln(self,data=''):
         self.write(data + '\r\n')
@@ -187,6 +184,7 @@ class Frame:
     def close(self):
         for s in self._subframe : s.clear()
         for u in self._loading : u.clear()
+        self.clear()
         raise EndInterrupt
 
     @property
@@ -202,14 +200,6 @@ class Frame:
     def fm(self,format_str,d_tuple):
         return format_str % d_tuple
 
-@mark('finish')
-class FinishFrame(Frame):
-    
-    def finish(self,e):
-        pass
-    def bad_ending(self,e):
-        pass    
-
 class Server:
 
     def __init__(self,root,host='0.0.0.0',port=5000,max_connect=5000):
@@ -221,14 +211,13 @@ class Server:
     def run(self):
 
         root = self.root
+        finish_frame = mark['finish']
 
         def new_connect(sock,addr):
             session = Session()
             session.ip,session.port = sock.getpeername()
             session.shortcuts = {}
-
             sock.send(ascii.CMD_CHAR_PER)
-            r = sock.recv(1024)
 
             runner = GotoInterrupt(root,(),{})
             
@@ -243,9 +232,9 @@ class Server:
                         runner = e
                     else:
                         raise EndInterrupt
-            except EndInterrupt as e:
+            except EndInterrupt,e:
                 now.clear()
-                t = mark['finish'](self,sock,session)
+                t = finish_frame(self,sock,session)
                 t.finish(e)
             except Exception,e :
                 print 'Bad Ending [%s]' % session.ip
@@ -253,13 +242,12 @@ class Server:
                 try: now.clear()
                 except: traceback.print_exc()
                 try:
-                    t = mark['finish'](self,sock,session)
+                    t = finish_frame(self,sock,session)
                     t.bad_ending(e)
                 except :
                     traceback.print_exc()
             except : pass
             print 'End [%s]' % session.ip
-            sock.close()
                 
         s = self.sock
         try:

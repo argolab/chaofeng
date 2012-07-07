@@ -5,6 +5,15 @@ Cháofēng is a simple telnet bbs framework for python
 
 更多的文档写在[wiki](https://github.com/LTaoist/chaofeng/wiki)里.
 
+INSTALL
+--------
+
+'''bash
+git clone https://github.com/argolab/chaofeng.git
+cd chaofeng
+sudo python2 setup.py install
+'''
+
 Hello, world
 ------------
 
@@ -17,11 +26,9 @@ import chaofeng.ascii as c
 class Hello(Frame):
 
     def initialize(self):
-        self.write('Hello,World!')
+        self.write('Hello,World!\r\n')
+        self.pause()
         self.close()
-
-    def clear(self):
-        self.write('Don leave me alone ...\r\n')
 
 if __name__ == '__main__' :
     s = Server(Hello)
