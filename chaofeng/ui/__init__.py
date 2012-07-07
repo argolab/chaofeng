@@ -1,4 +1,4 @@
-from Table import BaseTable,SimpleTable
+from Table import PagedTable,SimpleTable
 from texteditor import TextEditor 
 from textbox import SingleTextBox,Animation,LongTextBox
 
