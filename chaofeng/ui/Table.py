@@ -45,7 +45,7 @@ class PagedTable(BaseUI):
         return (self.page * self.page_limit) + self.op
 
     def restore(self):
-        buf = self.data_loader.get(self.page, self.page_limit)
+        buf = self.data_loader.get(self.page * self.page_limit, self.page_limit)
         self.frame.write(ac.move2(self.start_line, 1)+ac.kill_line)
         self.frame.write( ('\r\n'+ac.kill_line).join(buf))
         self.refresh_cursor()
@@ -56,8 +56,8 @@ class PagedTable(BaseUI):
                 self.op = op
                 self.refresh_cursor()
             return
-        self.page = self.page
-        self.op = self.op
+        self.page = page
+        self.op = op
         self.restore()
 
     def refresh_cursor(self):
