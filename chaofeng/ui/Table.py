@@ -1,15 +1,18 @@
 import chaofeng.ascii as ac
 from baseui import BaseUI
 
+__metaclass__ = type
+
 class DataLoader:
 
-    def __init__(self,get_raw,format,upper):
+    def __init__(self,get_raw,format, get_upper):
         self.get_raw = get_raw
         self.format = format
-        self.upper = upper  #######################################################
-
+        self.get_upper = get_upper
+        
     def fix_range(self,x):
-        return min(self.upper,max(0,x))
+        upper = self.get_upper()-1
+        return min(upper,max(0,x))
 
     def get(self, start, limit):
         self.raw_data = self.get_raw(start, limit)
@@ -55,7 +58,7 @@ class PagedTable(BaseUI):
             return
         self.page = self.page
         self.op = self.op
-        self.refresh()
+        self.restore()
 
     def refresh_cursor(self):
         self.frame.write(ac.movex_d + ' ' +
