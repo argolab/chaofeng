@@ -85,11 +85,11 @@ class Frame:
         self._subframe.append(t)
         return t
 
-    def load(self,uix,*args,**kwargs):
-        t = uix.new(self)
-        t.init(*args,**kwargs)
-        self._loading.append(t)
-        return t
+    def load(self, uimod, *args, **kwargs):
+        m = uimod(self)
+        m.init(*args,**kwargs)
+        frame._loading.append(m)
+        return m
     
     def get(self,data):
         pass

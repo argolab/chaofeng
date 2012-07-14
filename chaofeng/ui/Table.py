@@ -5,11 +5,11 @@ __metaclass__ = type
 
 class SimpleTable(BaseUI):
 
-    def __init__(self, start_line=0, page_limit=20):
+    def init(self, start_line=0, page_limit=20):
         self.start_line = start_line
         self.page_limit = page_limit
 
-    def init(self, data, format ,default=0):
+    def reset(self, data, format ,default=0):
         self.data = data
         self.format = format
         self.hover = self.start = -1
@@ -28,8 +28,6 @@ class SimpleTable(BaseUI):
             self.hover = hover
             self.refresh_cursor()
             return
-        # hover = which % self.page_limit
-        # start = which - hover
         buf = map(self.format,
                   self.data[start:start+self.page_limit])
         maxo = len(buf)
@@ -84,12 +82,12 @@ class SimpleTable(BaseUI):
         
 class AppendTable(BaseUI):
 
-    def __init__(self, key, start_line=0, page_limit=20):
+    def init(self, key, start_line=0, page_limit=20):
         self.start_line = start_line
         self.page_limit = page_limit
         self.key = key
 
-    def init(self, get_data, format):
+    def reset(self, get_data, format):
         self.get_data = get_data
         self.format = format
         self.data = []
@@ -188,34 +186,11 @@ class AppendTable(BaseUI):
     def go_first(self):
         self.goto(0)
 
-# class DataLoader:
-
-#     def __init__(self,get_raw,format, get_upper):
-#         self.get_raw = get_raw
-#         self.format = format
-#         self.get_upper = get_upper
-        
-#     def fix_range(self,x):
-#         upper = self.get_upper()-1
-#         return min(upper,max(0,x))
-
-#     def get(self, start, limit):
-#         self.raw_data = self.get_raw(start, limit)
-#         data = map(self.format,
-#                    self.raw_data)
-#         l = len(data)
-#         if l < limit:
-#             data.extend(['']*(limit-l))
-#         return data
-
-#     def item(self,key):
-#         return self.raw_data[key]
-
 class ModeAppendTable(AppendTable):
 
     def init(self, *data_loader):
         self.data_loader = data_loader
 
     def set_mode(self, mode):
-        super(ModeAppendTable, self).init(*self.data_loader[mode])
+        super(ModeAppendTable, self).reset(*self.data_loader[mode])
 

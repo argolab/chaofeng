@@ -14,10 +14,10 @@ class TextEditor(BaseUI,TextBuffer,
     
     bottom_text = ac.move2(SCR_HEIGHT+1,0) + ac.kill_line + 'chaofeng : [%d,%d] %s'
 
-    def __init__(self,height=23,**kwargs):
+    def init(self,height=23,**kwargs):
         self.__initmodules__(height=height,**kwargs)
 
-    def init(self,**kwargs):
+    def reset(self,**kwargs):
         self.action_hook("__init__")
 
     def bottom_bar(self):

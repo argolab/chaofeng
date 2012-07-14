@@ -10,12 +10,11 @@ class ColMenu(BaseUI):
         ac.k_right : "move_right",
         }
 
-    def __init__(self,**kwargs):
+    def init(self):
         self.shortcuts = {}
         self.pos = []
         self.values = []
         self.height = None
-        self.setup(**kwargs)
 
     def setup(self,data=None,height=None,background=None,hover=None):
         if hover is not None:

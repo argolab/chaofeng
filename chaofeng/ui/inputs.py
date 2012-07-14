@@ -9,12 +9,12 @@ class BaseInput(BaseUI):
         ac.k_backspace : "delete",
         }
     
-    def __init__(self,buffer_size=1024,prompt=None):
+    def init(self,buffer_size=1024,prompt=None):
         self.buffer_size = buffer_size
         if prompt :
             self.prompt = prompt
 
-    def init(self,prompt=None):
+    def reset(self,prompt=None):
         if prompt:
             self.prompt = prompt
         self.buffer = []
@@ -48,7 +48,7 @@ class BaseInput(BaseUI):
             self.frame.write(prompt)
         elif hasattr(self,'prompt') :
             self.frame.write(self.prompt)
-        self.init()
+        self.reset()
         while True :
             data = self.frame.read()
             for char in data :
@@ -72,13 +72,13 @@ class TextInput(BaseInput):
 
 class HiddenInput(TextInput):
 
-    def __init__(self,buffer_size=80,text='',start_line=0):
-        super(HiddenInput,self).__init__(buffer_size)
+    def init(self,buffer_size=80,text='',start_line=0):
+        super(HiddenInput,self).init(buffer_size)
         self.start_line = start_line
         self.set_text(text)
 
-    def init(self,text=None,refresh=True):
-        super(HiddenInput,self).init()
+    def reset(self,text=None,refresh=True):
+        super(HiddenInput,self).reset()
         self.set_text(text)
         if refresh:
             self.hidden()
@@ -93,7 +93,7 @@ class HiddenInput(TextInput):
             self.frame.write(prompt)
         elif hasattr(self,'prompt') :
             self.frame.write(self.prompt)
-        self.init(refresh=False)
+        self.reset(refresh=False)
         while True :
             data = self.frame.read_secret()
             if data in termitor :
@@ -120,7 +120,7 @@ class HiddenInput(TextInput):
             self.frame.write(prompt)
         elif hasattr(self,'prompt') :
             self.frame.write(self.prompt)
-        self.init(refresh=False)
+        self.reset(refresh=False)
         while True :
             data = self.frame.read_secret()
             if data in termitor :
@@ -178,8 +178,8 @@ class Password(BaseInput):
 
 class DatePicker(BaseInput):
 
-    def __init__(self):
-        super(DatePicker,self).__init__(8)
+    def init(self):
+        super(DatePicker,self).init(8)
 
     def acceptable(self,data):
         return data.isdigit()
