@@ -12,17 +12,12 @@ class Animation(BaseTextBox):
     Call back self.frame.play_done wher playone is True.
     '''
 
-    def init(self,data=None,start_line=0):
+    def init(self,data,start_line):
         self.data = data
-        if data :
-            self.len = len(self.data)
-        else : self.len = 0
+        self.len = len(self.data)
         self.start_line = start_line
         
-    def setup(self,data=None,auto_play=False,playone=False):
-        if data :
-            self.data = data
-            self.len = len(self.data)
+    def setup(self,auto_play=False,playone=False):
         self.select = -1
         self.playone = playone
         if auto_play :
@@ -55,7 +50,7 @@ class Animation(BaseTextBox):
         while True :
             self.send(None)
 
-    def lanuch(self):
+    def launch(self):
         self.next()
         data,time = self.data[self.select]
         self.frame.write(ac.move2(self.start_line,0)+data)

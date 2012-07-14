@@ -18,3 +18,7 @@ class BaseUI:
 
     def clear(self):
         pass
+
+    def try_action(self, action):
+        if action:
+            getattr(self, action)()

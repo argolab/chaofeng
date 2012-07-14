@@ -88,7 +88,7 @@ class Frame:
     def load(self, uimod, *args, **kwargs):
         m = uimod(self)
         m.init(*args,**kwargs)
-        frame._loading.append(m)
+        self._loading.append(m)
         return m
     
     def get(self,data):

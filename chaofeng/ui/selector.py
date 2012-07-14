@@ -54,15 +54,13 @@ class ColMenu(BaseUI):
             values.append(value)
         return (values,pos,shortcuts,''.join(buf))
 
-    def init(self,refresh=False,**kwargs):
+    def init(self,**kwargs):
         self.setup(**kwargs)
-        if refresh :
-            self.display()
         
     def fetch(self):
         return self.values[self.hover]
 
-    def display(self):
+    def restore(self):
         self.frame.write(self.content)
         self.frame.write(ac.move2(*self.pos[self.hover])+'>')
 
