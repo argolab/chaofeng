@@ -5,7 +5,7 @@ from eventlet.green import socket
 from eventlet import tpool
 from eventlet.timeout import Timeout 
 from chaofeng import ascii
-from chaofeng.g import static,mark
+from chaofeng.g import mark
 import functools 
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 import traceback

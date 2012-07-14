@@ -14,5 +14,4 @@ from chaofeng.bbs import Server,Frame,EndInterrupt,asynchronous
 import chaofeng.ascii
 import chaofeng.ui
 import chaofeng.g
-from chaofeng.g import static
 
