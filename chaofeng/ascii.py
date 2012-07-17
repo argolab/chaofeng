@@ -75,6 +75,7 @@ art_code = {
     "bg_black":"40","bg_red":"41","bg_green":"42","bg_yellow":"44","bg_blue":"44",
     "bg_magenta":"45","bg_cyan":"46","bg_white":"47","bg_default":"49",
     "bold":"1","underscore":"4","italic":"3","inverted":"7","blink":"5",
+    "reset":"0",
     }
 
 # Control characters
@@ -270,6 +271,7 @@ is_chchar = lambda data : all( c >= u'\u4e00' and c <= u'\u9fa5' for c in data)
 is_safe_char = lambda data : \
     (data[0] >= u' ')  and \
     ((data[0] <= u'~') or (data[0] > u'\xff'))
+is_alnum = lambda d : ('0'<=d<='9') or ('a'<=d<='z') or ('A'<=d<='Z')
 
 from unicodedata import east_asian_width
 

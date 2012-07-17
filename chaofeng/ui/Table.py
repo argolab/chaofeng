@@ -79,10 +79,16 @@ class SimpleTable(BaseUI):
             self.refresh_cursor()
 
     def page_up(self):
-        self._goto(self.start-self.page_limit, self.hover) and self.restore_screen()
+        if self._goto(self.start-self.page_limit, self.hover) :
+            self.restore_screen()
+        else:
+            self._goto(self.start, 0) and self.restore_screen()
 
     def page_down(self):
-        self._goto(self.start+self.page_limit, self.hover) and self.restore_screen()
+        if self._goto(self.start+self.page_limit, self.hover) :
+            self.restore_screen()
+        else:
+            self._goto(self.start, self.max-1) and self.restore_screen()
 
     def goto(self, which):
         h = which % self.page_limit
@@ -122,10 +128,11 @@ class AppendTable(BaseUI):
         data = self.get_data(upper, -self.page_limit)
         hover = len(data)
         if hover > 0 :
-            self.hover = hover
             if hover < self.page_limit:
-                data += self.data[:self.page_limit - hover]
-                hover = len(data)
+                self.load_with_lower(0)
+                self.hover = self.max
+                return True
+            self.hover = hover
             self.max = hover
             self.data = data
             return True
@@ -141,6 +148,10 @@ class AppendTable(BaseUI):
 
     def goto(self, which):
         self.load_with_lower(which)
+        self.restore()
+
+    def goto_upper(self, which):
+        self.load_with_upper(which)
         self.restore()
 
     def refresh_hover(self):
@@ -162,6 +173,7 @@ class AppendTable(BaseUI):
             buf.extend(['']*(self.page_limit-self.max))
         self.frame.write(ac.move2(self.start_line, 1)+ac.kill_line)
         self.frame.write(('\r\n'+ac.kill_line).join(buf))
+        self.frame.write(' ')
         self.refresh_cursor()
 
     def move_up(self):
@@ -180,15 +192,23 @@ class AppendTable(BaseUI):
 
     def page_up(self):
         h = self.hover
-        if self.load_with_uppder(self.get_page_lower()+1):
+        if self.load_with_upper(self.get_page_lower()-1):
             self.hover = h
             self.restore()
+        else:
+            self.go_first()
 
     def page_down(self):
         h = self.hover
-        if self.load_with_lower(self.get_page_upper()+1):
-            self.hover = h
+        if self.load_with_upper(self.get_page_upper()+self.page_limit):
+            # if self.load_with_lower(self.get_page_upper()+1):
+            if self.max < self.page_limit:
+                self.hover = self.max
+            else:
+                self.hover = h
             self.restore()
+        else:
+            self.go_last()
 
     key_maps = {
         ac.k_up : "move_up",
@@ -204,6 +224,9 @@ class AppendTable(BaseUI):
 
     def go_first(self):
         self.goto(0)
+
+    def go_last(self):
+        self.goto_upper(None)
 
 class ModeAppendTable(AppendTable):
 
