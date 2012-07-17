@@ -111,9 +111,8 @@ class TextEditor_Edit(TextEditorModule):
 
 class TextEditor_Mark(TextEditorModule):
 
-    @classmethod
-    def __modinit__(cls):
-        cls.add_hook("__init__","init_mark")
+    def __modinit__(self):
+        self.add_hook("__init__","init_mark")
 
     def init_mark(self):
         self.set_mark_iter()
@@ -158,17 +157,16 @@ class TextEditor_History(TextEditorModule):
 
     save_force_cmd = set()
 
-    @classmethod
-    def __modinit__(cls):
-        for cmd in cls.save_step_cmd:
-            cls.add_hook(cmd,"save_cmd_step")
-        for cmd in cls.save_force_cmd:
-            cls.add_hook(cmd,"save_history")
-        if hasattr(cls,"insert_iter"):
-            cls.add_hook("insert","save_cmd_step_iter")
-        cls._hislen = cls.kwargs['hislen']
-        cls._dis = cls.kwargs['dis']
-        cls.add_hook("__init__","init_history")
+    def __modinit__(self):
+        for cmd in self.save_step_cmd:
+            self.add_hook(cmd,"save_cmd_step")
+        for cmd in self.save_force_cmd:
+            self.add_hook(cmd,"save_history")
+        if hasattr(self,"insert_iter"):
+            self.add_hook("insert","save_cmd_step_iter")
+        self._hislen = self.kwargs['hislen']
+        self._dis = self.kwargs['dis']
+        self.add_hook("__init__","init_history")
 
     def init_history(self):
         self.history = [[],]*10

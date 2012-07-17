@@ -14,13 +14,19 @@ class BaseInput(BaseUI):
         if prompt :
             self.prompt = prompt
 
-    def reset(self,prompt=None):
+    def reset(self,buf=None,prompt=None):
         if prompt:
             self.prompt = prompt
-        self.buffer = []
+        self.buffer = buf or []
+        print (self.buffer, 'zz')
+
+    def restore(self):
+        self.frame.write(self.fetch_str())
 
     def fetch(self):
         return ''.join(self.buffer)
+
+    fetch_str = fetch
 
     def acceptable(self,data):
         return True
@@ -43,22 +49,28 @@ class BaseInput(BaseUI):
             self.buffer.pop()
             self.frame.write(ac.backspace)
 
-    def read(self,prompt=None,termitor=ac.ks_finish):
+    def read(self, buf=None, prompt=None,termitor=ac.ks_finish, stop=set()):
         if prompt :
             self.frame.write(prompt)
         elif hasattr(self,'prompt') :
             self.frame.write(self.prompt)
-        self.reset()
+        self.reset(buf=buf)
+        self.restore()
         while True :
             data = self.frame.read()
+            if data in stop:
+                return False
             for char in data :
                 if char in termitor :
                     return self.fetch()
                 self.send(char)
 
     def readln(self,prompt=None,termitor=ac.ks_finish):
-        res = self.read(prompt,termitor)
+        print 5
+        res = self.read(prompt=prompt,termitor=termitor)
+        print 6
         self.frame.write('\r\n')
+        print 7
         return res
 
 class TextInput(BaseInput):
@@ -197,8 +209,15 @@ class DatePicker(BaseInput):
         except:
             return None
 
+    def fetch_str(self):
+        text = self.buffer[:]
+        text[6:6]='-'
+        text[4:4]='-'
+        return ''.join(text)
+
     def send(self,data):
         super(DatePicker,self).send(data)
+        print self.buffer
         l = len(self.buffer)
         if l == 4 or l == 6 :
             self.frame.write('-')
@@ -208,3 +227,26 @@ class DatePicker(BaseInput):
         if l == 4 or l == 6 :
             self.frame.write(ac.backspace)
         super(DatePicker,self).delete()
+
+class Form(BaseUI):
+
+    def init(self):
+        pass
+
+    def reset(self):
+        pass
+
+    def run(self, actions, pos, acc=None):
+        i = 0
+        l = len(actions)
+        if acc is None:
+            acc = {}
+        while i<l :
+            self.frame.write(ac.move2(*pos[i]) + ac.kill_to_end)
+            res = actions[i](acc)
+            print res
+            if res is True:
+                i += 1
+            elif res is False:
+                i -= 1
+        return acc

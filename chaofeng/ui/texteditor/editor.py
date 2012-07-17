@@ -6,19 +6,10 @@ class TextEditorMeta(type):
     def __new__(cls,names,bases,attrs):
         cls = super(TextEditorMeta,cls).__new__(cls,names,bases,attrs)
         if not hasattr(cls,'__textmodule__'):
-            cls.__textmodule__ = set()
-        if names not in cls.__textmodule__ :
-                cls.__textmodule__.add(cls)
+            cls.__textmodule__ = []
+        if names not in cls.__textmodule__ and '__modinit__' in attrs :
+                cls.__textmodule__.append(cls)
         return cls
-
-    def __modinit__(cls):
-        pass
-
-    def add_hook(cls,cmdname,action):
-        if (cmdname in cls._hooks) or hasattr(cls,'%s_iter'% cmdname):
-            if cmdname not in cls._hooks :
-                cls._hooks[cmdname] = set()
-            cls._hooks[cmdname].add(action)
 
 class TextEditor_OX:
 
@@ -28,6 +19,12 @@ class TextEditor_OX:
         "__aftercmd__" : set(),
         # "__beforecmd__" : frozenset(),
         }
+
+    def add_hook(self,cmdname,action):
+        if (cmdname in self._hooks) or hasattr(self,'%s_iter'% cmdname):
+            if cmdname not in self._hooks :
+                self._hooks[cmdname] = set()
+            self._hooks[cmdname].add(action)
         
     def action_hook(self,hookname):
         for action in self._hooks[hookname]:
@@ -48,21 +45,24 @@ class TextEditorModule(TextEditor_OX):
 
 class TextBuffer(TextEditor_OX):
 
-    @classmethod
-    def __initmodules__(cls,**kwargs):
-        cls.__metaclass__.kwargs = kwargs
-        cls.h = kwargs['height']
-        cls.add_hook("__aftercmd__","bottom_bar")
-        cls.add_hook("__init__","init_buf")
-        for mod in cls.__textmodule__ :
-            mod.__modinit__()
-
-    def init_buf(self,buf=None,r=0,l=0,s=0,**kwargs):
+    def __initmodules__(self,**kwargs):
         self.kwargs = kwargs
+        self.h = kwargs['height']
+        self.add_hook("__aftercmd__","bottom_bar")
+        self.add_hook("__init__","init_buf")
+        for mod in self.__textmodule__ :
+            mod.__modinit__(self)
+
+    def init_buf(self,buf=None,r=0,l=0,s=0):
         self.buf = buf or [[]]
         self.l = l    # current line number
         self.r = r    # current row number
         self.s = s    # first visible line number
+
+    def set_text(self, text, l):
+        self.buf = map(list, text.split('\r\n')) + []
+        self.l = self.s = l
+        self.r = 0
 
     @property
     def status(self):
@@ -88,6 +88,9 @@ class TextBuffer(TextEditor_OX):
     def getscreen(self):
         return '\r\n'.join(map(lambda x: ''.join(x),
                                self.getlines(self.s,self.s+self.h)))
+
+    def get_all_lines(self):
+        return map(lambda x:''.join(x), self.buf)
 
     def getall(self):
         return '\r\n'.join(map(lambda x: ''.join(x),

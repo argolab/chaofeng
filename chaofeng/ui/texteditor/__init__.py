@@ -17,7 +17,7 @@ class TextEditor(BaseUI,TextBuffer,
     def init(self,height=23,**kwargs):
         self.__initmodules__(height=height,**kwargs)
 
-    def reset(self,**kwargs):
+    def reset(self):
         self.action_hook("__init__")
 
     def bottom_bar(self):

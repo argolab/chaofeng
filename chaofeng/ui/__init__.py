@@ -3,5 +3,5 @@ from texteditor import TextEditor
 from TextBox import SingleTextBox,Animation,LongTextBox
 
 from baseui import BaseUI
-from inputs import BaseInput,TextInput,Password,DatePicker,HiddenInput,zhTextInput
+from inputs import BaseInput,TextInput,Password,DatePicker,HiddenInput,zhTextInput,Form
 from selector import ColMenu

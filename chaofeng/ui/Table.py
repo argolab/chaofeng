@@ -33,18 +33,30 @@ class SimpleTable(BaseUI):
         maxo = len(buf)
         if maxo == 0 :
             return
-        self.buf = buf
         self.hover = hover
         self.start = start
         self.max = maxo
         if maxo < self.page_limit:
             buf.extend(['']*(self.page_limit-maxo))
+        self.buf = buf
         return True
-    
-    def restore(self):
+
+    def reload(self):
+        buf = map(self.format,
+                  self.data[self.start:self.start+self.page_limit])
+        self.max = len(buf)
+        if self.max < self.page_limit:
+            buf.extend(['']*(self.page_limit-self.max))
+        self.buf = buf
+
+    def restore_screen(self):
         self.frame.write(ac.move2(self.start_line, 1)+ac.kill_line)
         self.frame.write(('\r\n'+ac.kill_line).join(self.buf))
         self.refresh_cursor()
+
+    def restore(self):
+        self.reload()
+        self.restore_screen()
 
     def refresh_cursor(self):
         if self.hover < 0 : self.hover = 0
@@ -54,23 +66,23 @@ class SimpleTable(BaseUI):
 
     def move_down(self):
         if self.hover+1 >= self.max:
-            self._goto(self.start+self.page_limit, 0) and self.restore()
+            self._goto(self.start+self.page_limit, 0) and self.restore_screen()
         else:
             self.hover += 1
             self.refresh_cursor()
 
     def move_up(self):
         if self.hover <= 0:
-            self._goto(self.start-self.page_limit, self.page_limit -1) and self.restore()
+            self._goto(self.start-self.page_limit, self.page_limit -1) and self.restore_screen()
         else:
             self.hover -= 1
             self.refresh_cursor()
 
     def page_up(self):
-        self._goto(self.start-self.page_limit, self.hover) and self.restore()
+        self._goto(self.start-self.page_limit, self.hover) and self.restore_screen()
 
     def page_down(self):
-        self._goto(self.start+self.page_limit, self.hover) and self.restore()
+        self._goto(self.start+self.page_limit, self.hover) and self.restore_screen()
 
     def goto(self, which):
         h = which % self.page_limit
@@ -87,11 +99,13 @@ class AppendTable(BaseUI):
         self.page_limit = page_limit
         self.key = key
 
-    def reset(self, get_data, format):
+    def reset_with_upper(self, get_data, format, upper):
         self.get_data = get_data
         self.format = format
         self.data = []
         self.max = 0
+        if not self.load_with_upper(upper):
+            self.hover = -1
         
     def fetch(self):
         return self.data[self.hover]
@@ -103,7 +117,7 @@ class AppendTable(BaseUI):
         return self.data[0][self.key]
 
     def load_with_upper(self, upper):
-        if upper <= 0 :
+        if (upper is not None)and upper <= 0 :
             return
         data = self.get_data(upper, -self.page_limit)
         hover = len(data)
@@ -128,6 +142,11 @@ class AppendTable(BaseUI):
     def goto(self, which):
         self.load_with_lower(which)
         self.restore()
+
+    def refresh_hover(self):
+        self.frame.write('\r' + ac.kill_line + \
+                             self.format(self.fetch()) + \
+                             ac.move2(self.start_line + self.hover, 2))
 
     def refresh_cursor(self):
         if self.hover < 0 : self.hover = 0
