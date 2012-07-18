@@ -122,6 +122,9 @@ class AppendTable(BaseUI):
     def get_page_lower(self):
         return self.data[0][self.key]
 
+    def reload(self):
+        self.load_with_upper(self.get_page_upper())
+
     def load_with_upper(self, upper):
         if (upper is not None)and upper <= 0 :
             return
@@ -136,6 +139,9 @@ class AppendTable(BaseUI):
             self.max = hover
             self.data = data
             return True
+
+    def is_empty(self):
+        return self.max == 0
 
     def load_with_lower(self, lower):
         data = self.get_data(lower, self.page_limit)
