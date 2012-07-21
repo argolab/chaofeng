@@ -1,232 +1,232 @@
 from baseui import BaseUI
 import chaofeng.ascii as ac
 from datetime import date
+from collections import deque
 
 class BaseInput(BaseUI):
+
+    '''
+    Base Inputer for input text.
+    Will not print any thing during it run.
+    '''
 
     key_maps = {
         ac.k_del : "delete",
         ac.k_backspace : "delete",
         }
-    
-    def init(self,buffer_size=1024,prompt=None):
+
+    def init(self, buffer_size=78):
         self.buffer_size = buffer_size
-        if prompt :
-            self.prompt = prompt
 
-    def reset(self,buf=None,prompt=None):
-        if prompt:
-            self.prompt = prompt
-        self.buffer = buf or []
-        print (self.buffer, 'zz')
+    def set_buf(self, buf):
+        self.buffer = deque(buf,maxlen=self.buffer_size)
 
-    def restore(self):
-        self.frame.write(self.fetch_str())
+    def restore_screen(self):
+        pass
 
-    def fetch(self):
+    def do_command(self, command):
+        if command :
+            getattr(self, command)()
+
+    def real_read(self):
+        return self.frame.read()
+
+    def fetch_str(self):
         return ''.join(self.buffer)
 
-    fetch_str = fetch
+    fetch = fetch_str
 
-    def acceptable(self,data):
-        return True
+    def insert_char(self, data):
+        self.buffer.append(data)
 
-    def push(self,data):
-        if isinstance(data,list):
-            self.buffer.extend(data)
-        else:
-            self.buffer.append(data)
-
-    def send(self,data):
-        if data in self.key_maps :
-            getattr(self,self.key_maps[data])()
-        else:
-            if len(self.buffer) < self.buffer_size and self.acceptable(data) :
-                self.push(data)
+    def read(self, acceptable, buf, prompt, termitor):
+        if prompt:
+            self.frame.write(prompt)
+        buf = buf or []
+        self.set_buf(buf)
+        while True:
+            char = self.real_read()
+            if char in termitor:
+                return self.fetch()
+            cmd = self.key_maps.get(char)
+            if cmd :
+                self.do_command(cmd)
+            elif acceptable(char):
+                self.insert_char(char)
 
     def delete(self):
         if self.buffer :
-            self.buffer.pop()
-            self.frame.write(ac.backspace)
+            return self.buffer.pop()
 
-    def read(self, buf=None, prompt=None,termitor=ac.ks_finish, stop=set()):
-        if prompt :
-            self.frame.write(prompt)
-        elif hasattr(self,'prompt') :
-            self.frame.write(self.prompt)
-        self.reset(buf=buf)
-        self.restore()
-        while True :
-            data = self.frame.read()
-            if data in stop:
-                return False
-            for char in data :
-                if char in termitor :
-                    return self.fetch()
-                self.send(char)
+class VisableInput(BaseInput):
 
-    def readln(self,prompt=None,termitor=ac.ks_finish):
-        print 5
-        res = self.read(prompt=prompt,termitor=termitor)
-        print 6
-        self.frame.write('\r\n')
-        print 7
-        return res
+    def restore_screen(self):
+        self.frame.write(''.join(self.buffer))
 
-class TextInput(BaseInput):
-
-    def push(self,data):
-        super(TextInput,self).push(data)
+    def insert_char(self, data):
+        super(VisableInput, self).insert_char(data)
         self.frame.write(data)
-
+        
     def acceptable(self,data):
         return data.isalnum()
 
-class HiddenInput(TextInput):
-
-    def init(self,buffer_size=80,text='',start_line=0):
-        super(HiddenInput,self).init(buffer_size)
-        self.start_line = start_line
-        self.set_text(text)
-
-    def reset(self,text=None,refresh=True):
-        super(HiddenInput,self).reset()
-        self.set_text(text)
-        if refresh:
-            self.hidden()
-        
-    def set_text(self,text):
-        if text :
-            self.text = text
-
-    def read(self,prompt=None,termitor=ac.ks_finish):
-        self.frame.write(ac.move2(self.start_line,0) + ac.kill_line)
-        if prompt :
-            self.frame.write(prompt)
-        elif hasattr(self,'prompt') :
-            self.frame.write(self.prompt)
-        self.reset(refresh=False)
-        while True :
-            data = self.frame.read_secret()
-            if data in termitor :
-                break
-            self.send(data)
-        self.frame.write(ac.move2(self.start_line,0) +
-                         ac.kill_line + self.text)
-        return self.fetch()
-
-    def send_with_hook(self,data):
-        if data in self.key_maps :
-            getattr(self,self.key_maps[data])()
-        if len(self.buffer) < self.buffer_size and self.acceptable(data) :
-            self.push_with_hook(data)
-
-    def push_with_hook(self,data):
-        super(HiddenInput,self).push(data)
-        self.hook(''.join(self.buffer))
-
-    def read_with_hook(self,hook,prompt=None,termitor=ac.ks_finish):
-        self.hook = hook
-        self.frame.write(ac.save + ac.move2(self.start_line,0) + ac.kill_line)
-        if prompt :
-            self.frame.write(prompt)
-        elif hasattr(self,'prompt') :
-            self.frame.write(self.prompt)
-        self.reset(refresh=False)
-        while True :
-            data = self.frame.read_secret()
-            if data in termitor :
-                break
-            self.send_with_hook(data)
-        self.frame.write(ac.move2(self.start_line,0) +
-                         ac.kill_line + self.text + ac.restore)
-        return self.fetch()
-
-    def hidden(self):
-        self.frame.write(ac.move2(self.start_line,0) + self.text)
-
-class UnicodeTextInput(BaseInput):
-
-    def send(self,u_data):
-        if u_data in self.key_maps :
-            getattr(self,self.key_maps[u_data])()
-        try:
-            if len(self.buffer) + len(u_data) < self.buffer_size \
-                    and self.acceptable(u_data) :
-                self.push(u_data)
-        except UnicodeDecodeError:
-            pass
-        
-    def push(self,u_data):
-        super(UnicodeTextInput,self).push(list(u_data))
-        self.frame.write(u_data)
-        
     def delete(self):
-        raise NotImplementedError
+        data = super(VisableInput, self).delete()
+        if data :
+            self.frame.write(ac.backspace)
+            return data
 
-    def acceptable(self,u_data):
-        raise NotImplementedError
+    def read(self, buf=None, prompt=None, termitor=ac.ks_finish):
+        super(VisableInput, self).read(self.acceptable, buf, prompt, termitor)
 
-class zhTextInput(UnicodeTextInput):
+    def readln(self, buf=None, prompt=None, termitor=ac.ks_finish):
+        super(VisableInput, self).read(self.acceptable, buf, prompt, termitor)
+        self.frame.write('\r\n')
 
-    def acceptable(self,u_data):
-        return (u_data in ac.printable ) or ac.is_chchar(u_data)
+class EastAsiaTextInput(VisableInput):
+
+    def acceptable(self, u_data):
+        return ac.is_safe_char(u_data)
 
     def delete(self):
-        if self.buffer :
-            data = self.buffer.pop()
-            if ac.is_chchar(data) :
-                self.frame.write(ac.backspace*2)
-            else : self.frame.write(ac.backspace)
-
+        data = super(VisableInput, self).delete() # !!! ugly but important
+        print repr(data)
+        if data :
+            print ac.srcwidth(data)
+            self.frame.write(ac.srcwidth(data) * ac.backspace)
+            return data
+    
 class Password(BaseInput):
 
-    def push(self,data):
-        super(Password,self).push(data)
+    def insert_char(self, data):
+        super(Password, self).insert_char(data)
         self.frame.write('*')
 
     def acceptable(self,data):
         return data.isalnum()
 
+    def delete(self):
+        data = super(Password, self).delete()
+        if data :
+            self.frame.write(ac.backspace)
+            return data
+    
+    def read(self, prompt=None):
+        super(Password, self).read(self.acceptable, None, prompt=prompt, termitor=ac.ks_finish)
+
+    def readln(self, prompt=None):
+        super(Password, self).read(self.acceptable, None, prompt=prompt, termitor=ac.ks_finish)
+        self.frame.write('\r\n')
+
 class DatePicker(BaseInput):
 
+    str_format = '%Y-%m-%d'
+    seq_bit = set((3,6))
+
     def init(self):
-        super(DatePicker,self).init(8)
+        super(DatePicker,self).init(10)
 
-    def acceptable(self,data):
-        return data.isdigit()
+    def acceptable(self, data):
+        print data
+        return u'0'<= data <= '9'
 
-    def push(self,data):
-        super(DatePicker,self).push(data)
-        self.frame.write(data)
+    def insert_char(self, data):
+        l = len(self.buffer)
+        if  l <= 9 :
+            super(DatePicker, self).insert_char(data)
+            self.frame.write(data)
+            if l in self.seq_bit:
+                super(DatePicker, self).insert_char('-')
+                self.frame.write('-')
 
-    def fetch(self):
-        try:
-            b = self.buffer
-            return date(int(''.join(b[0:4])),
-                        int(''.join(b[4:6])),
-                        int(''.join(b[6:8])))
-        except:
-            return None
+    def restore_screen(self):
+        self.frame.write(self.fetch_str())
 
     def fetch_str(self):
-        text = self.buffer[:]
-        text[6:6]='-'
-        text[4:4]='-'
-        return ''.join(text)
+        return ''.join(self.buffer)
 
-    def send(self,data):
-        super(DatePicker,self).send(data)
-        print self.buffer
-        l = len(self.buffer)
-        if l == 4 or l == 6 :
-            self.frame.write('-')
+    def fetch_date(self):
+        try:
+            return datetime.datetime.strptime(self.fetch_str(),
+                                              self.str_format).date()
+        except ValueError:
+            return None
+
+    def read(self, prompt=None, buf=None):
+        super(DatePicker, self).read(self.acceptable, buf, prompt, termitor=ac.ks_finish,)
+
+    def readln(self, prompt=None, buf=None):
+        super(DatePicker, self).read(self.acceptable, buf, prompt, termitor=ac.ks_finish)
+        self.write('\r\n')
 
     def delete(self):
-        l = len(self.buffer)
-        if l == 4 or l == 6 :
+        data = super(DatePicker, self).delete()
+        if data:
             self.frame.write(ac.backspace)
-        super(DatePicker,self).delete()
+            return data
+
+# class HiddenInput(TextInput):
+
+#     def init(self,buffer_size=80,text='',start_line=0):
+#         super(HiddenInput,self).init(buffer_size)
+#         self.start_line = start_line
+#         self.set_text(text)
+
+#     def reset(self,text=None,refresh=True):
+#         super(HiddenInput,self).reset()
+#         self.set_text(text)
+#         if refresh:
+#             self.hidden()
+        
+#     def set_text(self,text):
+#         if text :
+#             self.text = text
+
+#     def read(self,prompt=None,termitor=ac.ks_finish):
+#         self.frame.write(ac.move2(self.start_line,0) + ac.kill_line)
+#         if prompt :
+#             self.frame.write(prompt)
+#         elif hasattr(self,'prompt') :
+#             self.frame.write(self.prompt)
+#         self.reset(refresh=False)
+#         while True :
+#             data = self.frame.read_secret()
+#             if data in termitor :
+#                 break
+#             self.send(data)
+#         self.frame.write(ac.move2(self.start_line,0) +
+#                          ac.kill_line + self.text)
+#         return self.fetch()
+
+#     def send_with_hook(self,data):
+#         if data in self.key_maps :
+#             getattr(self,self.key_maps[data])()
+#         if len(self.buffer) < self.buffer_size and self.acceptable(data) :
+#             self.push_with_hook(data)
+
+#     def push_with_hook(self,data):
+#         super(HiddenInput,self).push(data)
+#         self.hook(''.join(self.buffer))
+
+#     def read_with_hook(self,hook,prompt=None,termitor=ac.ks_finish):
+#         self.hook = hook
+#         self.frame.write(ac.save + ac.move2(self.start_line,0) + ac.kill_line)
+#         if prompt :
+#             self.frame.write(prompt)
+#         elif hasattr(self,'prompt') :
+#             self.frame.write(self.prompt)
+#         self.reset(refresh=False)
+#         while True :
+#             data = self.frame.read_secret()
+#             if data in termitor :
+#                 break
+#             self.send_with_hook(data)
+#         self.frame.write(ac.move2(self.start_line,0) +
+#                          ac.kill_line + self.text + ac.restore)
+#         return self.fetch()
+
+#     def hidden(self):
+#         self.frame.write(ac.move2(self.start_line,0) + self.text)
 
 class Form(BaseUI):
 

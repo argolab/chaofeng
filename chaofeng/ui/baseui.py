@@ -10,9 +10,6 @@ class BaseUI:
     def init(self):
         raise NotImplementedError
 
-    def send(self,data):
-        raise NotImplementedError
-
     def fetch(self):
         raise NotImplementedError
 
