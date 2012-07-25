@@ -16,6 +16,6 @@ class BaseUI:
     def clear(self):
         pass
 
-    def try_action(self, action):
+    def do_command(self, action):
         if action:
             getattr(self, action)()

@@ -38,6 +38,8 @@ class WakeupInterrupt(TravelInterrupt):
     def work(self, f):
         f.restore()
 
+class SafeInterrupt(Exception): pass
+
 class EndInterrupt(Exception): pass
 
 class BadEndInterrupt(Exception): pass
@@ -109,6 +111,9 @@ class Frame:
     def run(self):
         pass
 
+    def interrupt(self, e):
+        pass
+
     def loop(self):
         while True :
             self.read()
@@ -120,6 +125,21 @@ class Frame:
                 print msg % args
             else:
                 print msg
+
+    # def read(self):
+    #     if self.sockbuf :
+    #         return self.sockbuf.popleft()
+    #     else:
+    #         data = self.sock.recv(1024)
+    #         if not data:
+    #             raise BadEndInterrupt
+    #         if self.get : self.get(data)
+    #         try:
+    #             data = self.u(data)
+    #         except:
+    #             pass
+    #         else :
+    #             self.sockbuf.extend(data)
 
     def read(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
@@ -134,9 +154,13 @@ class Frame:
 
     def read_secret(self,buffer_size=1024):
         data = self.sock.recv(buffer_size)
+        print data
         if not data :
             raise BadEndInterrupt
         else:
+            try:
+                data = self.u(data)
+            except: pass
             return data
         
     def pause(self,prompt=None):
@@ -163,7 +187,8 @@ class Frame:
             self.close()
         except:
             traceback.print_exc()
-
+            raise e
+        
     def writeln(self,data=''):
         self.write(data + '\r\n')
 
@@ -189,15 +214,11 @@ class Frame:
         for u in self._loading : u.clear()
         raise EndInterrupt
 
-    @property
-    def charset(self):
-        return 'gbk'
-
     def u(self,s):
-        return s.decode(self.charset)
+        return s.decode(self.session.charset)
 
     def s(self,u):
-        return u.encode(self.charset)
+        return u.encode(self.session.charset)
 
     def fm(self,format_str,d_tuple):
         return format_str % d_tuple
@@ -241,6 +262,8 @@ class Server:
                     except TravelInterrupt as e:
                         now.clear()
                         runner = e
+                    except SafeInterrupt as e:
+                        now.interrupt(e)
                     else:
                         raise EndInterrupt
             except EndInterrupt as e:

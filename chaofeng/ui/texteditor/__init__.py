@@ -16,6 +16,7 @@ class TextEditor(BaseUI,TextBuffer,
 
     def init(self,height=23,**kwargs):
         self.__initmodules__(height=height,**kwargs)
+        self.reset()
 
     def reset(self):
         self.action_hook("__init__")
@@ -41,5 +42,5 @@ class TextEditor(BaseUI,TextBuffer,
         char = filter(ac.is_safe_char,self.frame.u(char))
         for c in char:
             self.insert_iter(c)
-            
+
 __all__ = ["TextEditor"]

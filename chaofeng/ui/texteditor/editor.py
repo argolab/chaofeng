@@ -30,7 +30,7 @@ class TextEditor_OX:
         for action in self._hooks[hookname]:
             getattr(self,action)()
 
-    def do_command(self,cmd):
+    def do_editor_command(self,cmd):
         do_iter = '%s_iter' % cmd
         if hasattr(self,do_iter):
             getattr(self,do_iter)()
@@ -86,6 +86,7 @@ class TextBuffer(TextEditor_OX):
         return buf
 
     def getscreen(self):
+        print (self.s, self.h)
         return '\r\n'.join(map(lambda x: ''.join(x),
                                self.getlines(self.s,self.s+self.h)))
 
@@ -109,6 +110,11 @@ class TextBuffer(TextEditor_OX):
         self.buf[self.l:self.l]=[[]]
         self.r = 0
         self.write('\r' + ac.insert1)
+
+    def insert_paragraph(self, text):
+        self.new_line()
+        lines = map(list, text.split('\r\n'))
+        self.buf[self.l:self.l] = lines
 
     def remove_lines(self,num=1):
         if self.total_line():

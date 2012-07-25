@@ -36,7 +36,7 @@ class Animation(BaseTextBox):
         if hasattr(self,'thread') :
             self.thread.kill()
 
-    def go_one(self):
+    def goto_one(self):
         while True:
             try:
                 data, time = self.gener.next()
@@ -57,7 +57,7 @@ class Animation(BaseTextBox):
     def run(self, playone=False):
         self.prepare(playone)
         while True :
-            self.go_one()
+            self.goto_one()
 
     def launch(self, playone=False):
         self.thread = lanuch(self.run, playone)
@@ -73,7 +73,7 @@ class LongTextBox(BaseTextBox):
 
     def init(self, text, callback, height=23):
         self.h = height
-        self.reset(text)
+        self.set_text(text)
         self.callback = callback
         
     def set_text(self,text):
@@ -97,6 +97,9 @@ class LongTextBox(BaseTextBox):
         else:
             return self.buf[f:t]
 
+    def fix_bottom(self):
+        pass
+
     def set_start(self,start):
         if start == self.s:
             return
@@ -105,6 +108,7 @@ class LongTextBox(BaseTextBox):
             self.write(ac.move0 + ac.insertn(offset) + '\r')
             self.write('\r\n'.join(self.getlines(start,self.s)))
             self.s = start
+            self.fix_bottom()
         elif (start > self.s) and (start <= self.s + 10):
             astart = self.s + self.h # Append Start
             self.write(ac.move2(self.h+1,0))
@@ -112,6 +116,7 @@ class LongTextBox(BaseTextBox):
             self.write('\r\n'.join(self.getlines(astart, start + self.h)))
             self.write('\r\n')
             self.s = start
+            self.fix_bottom()
         else :
             self.s = start
             self.refresh_all()
@@ -128,24 +133,24 @@ class LongTextBox(BaseTextBox):
         else:
             self.callback(True)
 
-    def go_line(self,num):
+    def goto_line(self,num):
         if self.s == 0 and num < 0 :
             self.callback(True)
         if self.s == self.max and num > 0:
             self.callback(False)
         self.set_start(max(0,min(num,self.len-self.h)))
         
-    def go_first(self):
-        self.go_line(0)
+    def goto_first(self):
+        self.goto_line(0)
 
-    def go_last(self):
-        self.go_line(self.len-self.h)
+    def goto_last(self):
+        self.goto_line(self.len-self.h)
 
     def page_down(self):
-        self.go_line(self.s - self.h)
+        self.goto_line(self.s - self.h)
 
     def page_up(self):
-        self.go_line(self.s + self.h)
+        self.goto_line(self.s + self.h)
 
     def refresh_all(self):
         self.write(ac.move0 + ac.clear)
@@ -208,7 +213,7 @@ class BaseBuffer(BaseUI):
             return True
         else : return False
         
-    def set_page_start_lazy_iter(self, start_num):
+    def set_page_start_lazy(self, start_num):
         if start_num < 0 : start_num = 0
         if start_num == self.start_num:
             return True
@@ -226,28 +231,28 @@ class BaseBuffer(BaseUI):
         self.frame.write(ac.move2(self.start_line, 1) + ac.kill_line + \
                               ('\r\n'+ac.kill_line).join(self.current))
 
-    def page_prev_iter(self):
+    def page_up(self):
         '''
         Set previous page as display. Return True while has at least one line,
         or return False while cannot fetch any things.
         '''
-        return self.set_page_start_lazy_iter(self.start_num - self.page_limit)
+        return self.set_page_start_lazy(self.start_num - self.page_limit)
 
-    def page_next_iter(self):
+    def page_down(self):
         '''
         Set the next page as display. Return True while has fetch something,
         or return Flase whie it's out of range.
         '''
-        return self.set_page_start_lazy_iter(self.start_num + self.page_limit)
+        return self.set_page_start_lazy(self.start_num + self.page_limit)
 
-    def go_first_iter(self):
-        return self.set_page_start_lazy_iter(0)
+    def goto_first(self):
+        return self.set_page_start_lazy(0)
 
 class PagedTable(BaseBuffer):
 
     def init(self, loader, formater, start_num, start_line, page_limit=20):
         self.reset_loader(loader, formater)
-        self.init_buf(self.get_wrapper, start_num, start_line, page_limit)
+        self.init_buf(self.get_wrapped, start_num, start_line, page_limit)
         self.hover = -1
         self.reset_cursor(start_num % page_limit)
 
@@ -255,55 +260,75 @@ class PagedTable(BaseBuffer):
         self.table_loader = loader
         self.formater = formater
 
-    def get_wrapper(self, start, limit):
+    def get_wrapped(self, start, limit):
         self.tabledata = self.table_loader(start, limit)
         return map(self.formater, self.tabledata)
 
-    def reset_cursor(self, hover):
+    def reset_cursor_gently(self, hover):
         if hover < 0 : hover = 0
         if hover < self.vis_height :
             self.hover = hover
             return True
         else : return False
 
-    def restore_cursor(self):
+    def restore_cursor_gently(self):
         self.frame.write(ac.move2(self.start_line + self.hover, 1)
                          + '>')
 
-    def reset_cursor_iter(self, hover):
-        if self.reset_cursor(hover):
+    def reset_cursor(self, hover):
+        if self.reset_cursor_gently(hover):
             self.frame.write(ac.movex_d + ' ' + ac.move2(self.start_line + self.hover, 1)
                              + '>')
 
     def restore_screen(self):
         super(PagedTable, self).restore_screen()
-        self.restore_cursor()
+        self.restore_cursor_gently()
 
-    def page_prev_iter(self):
-        super(PagedTable, self).page_prev_iter() and\
+    def page_up(self):
+        super(PagedTable, self).page_up() and\
             (self.hover >= self.vis_height) and \
-            self.reset_cursor_iter(self.vis_height-1)
+            self.reset_cursor(self.vis_height-1)
 
-    def page_next_iter(self):
-        if super(PagedTable, self).page_next() :
-            self.reset_cursor_iter(min(self.hover, self.vis_height-1))
+    def page_down(self):
+        if super(PagedTable, self).page_down() :
+            self.reset_cursor(min(self.hover, self.vis_height-1))
         else:
-            self.reset_cursor_iter(self.vis_height)
+            self.reset_cursor(self.vis_height)
 
-    def move_up_iter(self):
+    def move_up(self):
         if self.hover < 0 :
             self.hover = 0
         elif self.hover > 0:
-            self.reset_cursor_iter(self.hover-1)
+            self.reset_cursor(self.hover-1)
 
-    def move_down_iter(self):
+    def move_down(self):
         if self.hover+1 <= self.vis_height :
-            self.reset_cursor_iter(self.hover + 1)
+            self.reset_cursor(self.hover + 1)
         else:
-            super(PagedTable, self).page_next_iter() and\
-                self.reset_cursor_iter(0)
+            super(PagedTable, self).page_down() and\
+                self.reset_cursor(0)
 
-    def goto_iter(self, num):
-        s, h = divmod(num, self.vis_height)
-        self.set_page_start_iter(s) and\
-            self.reset_cursor_iter(h)
+    def goto(self, num):
+        s, h = divmod(num, self.page_limit)
+        self.set_page_start(s) and\
+            self.reset_cursor(h)
+
+    def goto_first(self):
+        self.set_page_start(0) and\
+            self.reset_cursor(0)
+
+    def fetch(self):
+        return self.tabledata[self.hover]
+        
+    def fetch_num(self):
+        return self.start_num + self.hover
+
+    def set_hover_data(self, data):
+        self.tabledata[self.hover] = data
+        self.frame.write(''.join(('\r',
+                            ac.kill_line,
+                            self.formater(data))))
+        self.restore_cursor_gently()
+
+    def is_empty(self):
+        return self.vis_height <= 0

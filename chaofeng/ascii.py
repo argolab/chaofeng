@@ -221,7 +221,9 @@ k_ctrl_w = k_cp('w')
 k_ctrl_h = k_cp('h')
 k_ctrl_e = k_cp('e')
 k_ctrl_l = k_cp('l')
+k_ctrl_o = k_cp('o')
 k_ctrl_b = k_cp('b')
+k_ctrl_i = k_cp('i')
 k_ctrl_f = k_cp('f')
 k_ctrl_c = k_cp('c')
 k_ctrl_z = k_cp('z')
@@ -276,3 +278,5 @@ is_alnum = lambda d : ('0'<=d<='9') or ('a'<=d<='z') or ('A'<=d<='Z')
 from unicodedata import east_asian_width
 
 srcwidth = lambda x : 2 if east_asian_width(x) in "FAW" else 1
+
+is_gbk_zh = lambda d : u'\x80' < d < u'\xff'

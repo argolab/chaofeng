@@ -112,9 +112,11 @@ class TextEditor_Edit(TextEditorModule):
 class TextEditor_Mark(TextEditorModule):
 
     def __modinit__(self):
+        print 'fuck'
         self.add_hook("__init__","init_mark")
-
+        
     def init_mark(self):
+        print 'Init mark system...'
         self.set_mark_iter()
         self.clipboard =[[]]
 
@@ -134,6 +136,11 @@ class TextEditor_Mark(TextEditorModule):
             return self.ml, self.mr, self.l,  self.r
         else:
             return self.l,  self.r,  self.ml, self.mr
+
+    def get_clipboard(self):
+        print self.clipboard
+        return '\r\n'.join(map(lambda x:''.join(x),
+                               self.clipboard))
 
     def remove_area_iter(self):
         minl,minr,maxl,maxr = self.get_pair()
