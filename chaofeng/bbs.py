@@ -73,6 +73,17 @@ class Frame:
 
     __metaclass__ = FrameMeta
 
+    # def subframe(self, m, *args, **kwargs):
+    #     evt = event.Event()
+    #     def frame_holder():
+    #         d = mark[m](self.server, self.sock, self.session)
+    #         try:
+    #             d.initialize(*args, **kwargs)
+                
+    #         evt.send(True)
+    #     _ = eventlet.spawn(new_frame)
+    #     return evt.wait()
+    
     def __init__(self,server,sock,session):
         self.session = session
         self.server = server

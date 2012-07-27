@@ -187,52 +187,44 @@ class ColMenu(BaseUI):
 
     def init(self):
         self.shortcuts = {}
-        self.pos = []
-        self.values = []
-        self.height = False
+        self.pos = {}
+        self.vlaues = []
+        self.text = []
 
-    def setup(self,data=None,height=None,background='',hover=0):
-        if hover is not None:
-            self.hover = hover
-        if background is not None:
-            self.background = background
-        if height is not None:
-            self.height = height
-        if data is not None:
-            self.set_data(*data)
+    def setup(self, data, height=None, background='', hover=0):
+        self.hover = hover
+        self.background = background
+        self.height = height
+        self.set_data(*data)
 
-    def set_data(self,values,pos,shortcuts,outlook):
-        self.values = values
+    def set_data(self, real, pos, shortcuts, text):
+        self.real = real
         self.pos = pos
         self.shortcuts = shortcuts
-        self.content = self.background + outlook
-        self.len = len(self.values)
-
-    def set_content(self,content):
-        self.content = content
+        self.text = text
+        self.content = ''.join([ '%s  %s' % (ac.move2(*p), t)
+                                 for p,t in zip(pos, text)])
+        self.len = len(self.real)
 
     @staticmethod
     def tidy_data(data):
-        shortcuts = {}
-        pos = []
-        values = []
-        buf = []
-        for index,item in enumerate(data) :
-            if len(item) == 4 :
-                text,value,key,(x,y) = item
-            else :
-                text,value,key = item
-                x += 1
-            buf.append(ac.move2(x,y+2)+text)
-            shortcuts[key] = index
-            pos.append((x,y))
-            values.append(value)
-        return (values,pos,shortcuts,''.join(buf))
+        text, real, shortcuts = zip(*data)
+        shortcuts = dict( (k,i) for i,k in enumerate(shortcuts))
+        pos = [ d[3] if len(d)==4 else None for d in data ]
+        sx,sy = 0,0
+        for i in range(len(pos)):
+            if pos[i] :
+                sx,sy = pos[i]
+            else:
+                sx += 1
+                pos[i] = (sx,sy)
+        return real, pos, shortcuts, text
         
     def fetch(self):
-        return self.values[self.hover]
+        return self.real[self.hover]
 
     def restore(self):
+        self.frame.write(self.background)
         self.frame.write(self.content)
         self.frame.write(ac.move2(*self.pos[self.hover])+'>')
 
