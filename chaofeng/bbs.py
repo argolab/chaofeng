@@ -11,6 +11,14 @@ import functools
 import traceback
 import sys
 
+class FatalException(Exception):pass
+
+class BrokenConnection(FatalException):
+
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+
 class TravelInterrupt(Exception):
     pass
 
@@ -59,44 +67,36 @@ class Session:
     def set_charset(self,codecs):
         self.charset = codecs
 
-class FrameMeta(type):
-
-    def __new__(cls,name,bases,attrs):
-        res = super(FrameMeta,cls).__new__(cls,name,bases,attrs)
-        res.__clsinit__()
-        return res
-
-    def __clsinit__(cls):
-        pass
-
 class Frame:
 
-    __metaclass__ = FrameMeta
+    __metaclass__ = type
 
-    # def subframe(self, m, *args, **kwargs):
-    #     evt = event.Event()
-    #     def frame_holder():
-    #         d = mark[m](self.server, self.sock, self.session)
-    #         try:
-    #             d.initialize(*args, **kwargs)
-                
-    #         evt.send(True)
-    #     _ = eventlet.spawn(new_frame)
-    #     return evt.wait()
+    def _socket_holder(self, buffer_size=1024):
+        while True:
+            data = self.sock.recv(buffer_size)
+            if len(data) == 1 and ascii.is_gbk_zh(data):  # Ugly
+                data += self.sock.recv(1)
+            if data in ascii.CC:
+                print repr(ascii.CC[data])
+                yield ascii.CC[data]
+            elif data:
+                try:
+                    data = self.u(data)
+                except UnicodeDecodeError:
+                    print 'UnicodeDecodeError'
+                    continue
+                for char in data:
+                    yield char
+            else:
+                raise BrokenConnection(self.session.ip, self.session.port)
     
     def __init__(self,server,sock,session):
         self.session = session
         self.server = server
         self.sock = sock
+        self.stream = self._socket_holder()
         self._subframe = []
         self._loading = []
-
-    def sub(self,subframe,*args,**kwargs):
-        t = subframe(self.server,self.sock,self.session)
-        t.initialize(*args,**kwargs)
-        t._father = self
-        self._subframe.append(t)
-        return t
 
     def load(self, uimod, *args, **kwargs):
         m = uimod(self)
@@ -152,27 +152,14 @@ class Frame:
     #         else :
     #             self.sockbuf.extend(data)
 
-    def read(self,buffer_size=1024):
-        data = self.sock.recv(buffer_size)
-        if not data :
-            raise BadEndInterrupt
-        else:
-            if self.get : self.get(data)
-            try:
-                data = self.u(data)
-            except: pass
-            return data
+    def read(self):
+        char = self.stream.next()
+        if self.get :
+            self.get(char)
+        return char
 
-    def read_secret(self,buffer_size=1024):
-        data = self.sock.recv(buffer_size)
-        print data
-        if not data :
-            raise BadEndInterrupt
-        else:
-            try:
-                data = self.u(data)
-            except: pass
-            return data
+    def read_secret(self):
+        return self.stream.next()
         
     def pause(self,prompt=None):
         if prompt is not None:
@@ -193,8 +180,9 @@ class Frame:
             traceback.print_exc()
             self.close()
         except Exception,e:
-            print e
+            print (self, e)
             traceback.print_exc()
+            print repr(data)
             self.close()
         except:
             traceback.print_exc()
@@ -315,27 +303,32 @@ class Server:
 class AsyncTimeLimitError(Exception):pass
 
 def asynchronous(f):
-    return asynchronous_t(3)(f)
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        with Timeout( 10, AsyncTimeLimitError):
+            return tpool.execute(f, *args, **kwargs)
+    return wrapper
 
-def asynchronous_t(max_delay):
-    def _(f):
-        @functools.wraps(f)
-        def wrapper(*args,**kwargs):
-            with Timeout( max_delay, AsyncTimeLimitError):
-                return tpool.execute(f, *args, **kwargs)
-        return wrapper
-    return _
+# def asynchronous_t(max_delay):
+#     def _(f):
+#         @functools.wraps(f)
+#         def wrapper(*args,**kwargs):
+#             print 2
+#             with Timeout( max_delay, AsyncTimeLimitError):
+#                 return tpool.execute(f, *args, **kwargs)
+#         return wrapper
+#     return _
 
-def asynchronous_n(max_retry):
-    def _(f):
-        @functools.wraps(f)
-        def wrapper(*args,**kwargs):
-            for i in range(max_retry):
-                try:
-                    return f(*args,**kwargs)
-                except AsyncTimeLimitError:
-                    pass
-            else:
-                raise AsyncTimeLimitError
-        return wrapper
-    return _
+# def asynchronous_n(max_retry):
+#     def _(f):
+#         @functools.wraps(f)
+#         def wrapper(*args,**kwargs):
+#             for i in range(max_retry):
+#                 try:
+#                     return f(*args,**kwargs)
+#                 except AsyncTimeLimitError:
+#                     pass
+#             else:
+#                 raise AsyncTimeLimitError
+#         return wrapper
+#     return _

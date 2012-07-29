@@ -3,6 +3,7 @@ import chaofeng.ascii as ac
 from chaofeng import sleep
 from eventlet import spawn as lanuch
 from itertools import cycle
+from uiexception import NullValueError
 
 class BaseTextBox(BaseUI):
     pass
@@ -11,6 +12,7 @@ class Animation(BaseTextBox):
 
     '''
     Call back self.frame.play_done wher playone is True.
+    data :: [ (text, time) ... ]
     '''
 
     def init(self, data, start_line, pause=None, callback=None):
@@ -184,7 +186,8 @@ class BaseBuffer(BaseUI):
         self.start_line = start_line
         self.page_limit = page_limit
         self.loader = loader
-        self.set_page_start(start_num)
+        if not self.set_page_start(start_num) :
+            raise NullValueError(u"Cannot get at least one record by funcion `%s` " % loader.func_name)
 
     def fetch(self):
         return self.current
@@ -332,3 +335,7 @@ class PagedTable(BaseBuffer):
 
     def is_empty(self):
         return self.vis_height <= 0
+
+    def reload(self):
+        self.set_page_start(self.start_num) and\
+            self.reset_cursor(self.hover)

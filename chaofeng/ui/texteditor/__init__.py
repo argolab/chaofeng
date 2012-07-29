@@ -39,7 +39,7 @@ class TextEditor(BaseUI,TextBuffer,
         self.frame.write(data)
 
     def safe_insert_iter(self,char):
-        char = filter(ac.is_safe_char,self.frame.u(char))
+        char = filter(ac.is_safe_char, char)
         for c in char:
             self.insert_iter(c)
 

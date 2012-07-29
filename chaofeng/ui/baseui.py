@@ -4,6 +4,8 @@ from copy import copy
 
 class BaseUI:
 
+    is_destory_screen = True
+
     def __init__(self, frame):
         self.frame = frame
         
