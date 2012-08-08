@@ -1,46 +1,42 @@
-
-from ..baseui import BaseUI
+from baseui import BaseUI
 import chaofeng.ascii as ac
-from copy import deepcopy
-from editor import TextBuffer
-from editormod import *
 from datetime import datetime
 
-class TextEditor(BaseUI,TextBuffer,
-                       TextEditor_Cursor,TextEditor_Edit,
-                       TextEditor_Mark,TextEditor_History):
+class TextEditor(BaseUI):
 
-    SCR_HEIGHT = 23
-    
-    bottom_text = ac.move2(SCR_HEIGHT+1,0) + ac.kill_line + 'chaofeng : [%d,%d] %s'
-
-    def init(self,height=23,**kwargs):
-        self.__initmodules__(height=height,**kwargs)
-        self.reset()
-
-    def reset(self):
-        self.action_hook("__init__")
+    def init(self, text=None, hover_row=0, hover_col=0, vis_start=0):
+        if text :
+            buf = map(list, text.split('\r\n')) + []
+            self.buf = buf
+        else:
+            self.buf = [[]]
+        self._hover_row = hover_row
+        self._hover_col = hover_col
+        self._vis_start = vis_start
 
     def bottom_bar(self):
-        l,r = self.getlr()
-        self.write(self.bottom_text % (l,r,datetime.now().ctime()))
+        self.write((ac.move2(self.h+1, 0) + ac.kill_line +
+                    '[%d,%d] %s' % (self.l,self.r, ''.join(self.getline())[:80])))
         self.fix_cursor()
 
-    def char_width(self,char):
-        return ac.srcwidth(char)
+    def restore_screen(self):
+        buf = self.buf[self._hover_row:self._hover_row+self.height]
+        self.write(''.join([
+                    ac.move0,
+                    ac.clear,
+                    '\r\n'.join(buf),
+                    ]))
+        self.bottom_bar()
 
-    def refresh_iter(self):
-        self.refresh_all()
+    def char_width(self, char):
+        return len(char)
 
-    def message(self,msg):
-        print msg
+    def visible_width(self):
+        return reduce(lambda acc,obj: acc+self.char_width(obj),
+                      self.buf[self._hover_row][:self._hover_col],1)
 
-    def write(self,data):
-        self.frame.write(data)
+    def fix_cursor(self):
+        self._hover_col = min(self._hover_col, len(self.buf[self._hover_row]))
+        cr = self.visible_width()
+        self.write(ac.move2(self._hover_col - self._vis_start +1), cr)
 
-    def safe_insert_iter(self,char):
-        char = filter(ac.is_safe_char, char)
-        for c in char:
-            self.insert_iter(c)
-
-__all__ = ["TextEditor"]

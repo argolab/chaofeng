@@ -214,6 +214,11 @@ k_page_down = '\x1b[6~'
 
 k_home = '\x1b[1~'
 k_end = '\x1b[4~'
+k_ctrl_home = '\x13'
+k_ctrl_end = '\x14'
+
+k_end2 = '\x1b[F'
+k_ctrl_end2 = '\x1b[1;5F'
 
 k_cp = lambda c : chr(ord(c)-96)
 k_ctrl_a = k_cp('a')
@@ -251,11 +256,11 @@ k_c_c = '\x03'
 k_c_h = '\x08'
 k_c_p = k_cp('p')
 
-k_del = chr(127)
+k_backspace = chr(127)
 k_delete = '\x1b[3~'
-k_backspace = chr(8)
+k_backspace2 = chr(8)
 
-ks_delete = set((k_del, k_delete, k_backspace))
+ks_delete = set((k_backspace, k_delete, k_backspace2))
 
 k_enter_linux = chr(13)
 k_enter_window = chr(10)

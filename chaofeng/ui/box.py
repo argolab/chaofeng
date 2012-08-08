@@ -26,6 +26,7 @@ class Animation(BaseTextBox):
         self.frame.write(''.join((ac.save,
                                   ac.move2(self.start_line, 1),
                                   data,
+                                  ac.reset,
                                   ac.restore)))
         
     def prepare(self, playone=False):

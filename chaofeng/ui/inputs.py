@@ -18,7 +18,7 @@ class BaseInput(BaseUI):
     '''
 
     key_maps = {
-        ac.k_del : u"delete",
+        ac.k_delete : u"delete",
         ac.k_backspace : u"delete",
         }
 
@@ -65,6 +65,10 @@ class BaseInput(BaseUI):
         return True
             
     def read(self, buf, prompt, termitor):
+        u'''
+        Read a string from screen. Return the result when find a string in termitor. Return
+        `False` when recv a Ctrl+c.
+        '''
         if prompt:
             self.frame.write(prompt)
         buf = buf or []
@@ -75,8 +79,9 @@ class BaseInput(BaseUI):
             try:
                 self.push(char)
             except TermitorInputInterrupt:
-                break
-        return self.fetch()
+                return self.fetch()
+            except SkipInputInterrupt:
+                return False;
 
     def delete(self):
         if self.buffer :
