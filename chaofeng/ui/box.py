@@ -67,6 +67,67 @@ class Animation(BaseTextBox):
 
 class LongTextBox(BaseTextBox):
 
+    height = 23
+    
+    def init(self, lines, callback):
+        self.lines = lines
+        self._vis_start = 0
+        self.callback = callback
+
+    def reset_lines(self, lines):
+        self._vis_start = 0
+        self.lines = lines
+        
+    def set_start(self, start):
+        try:
+            self.lines[start]
+        except IndexError:
+            return
+        self._vis_start = start
+
+    def restore_screen(self):
+        self.frame.write(''.join([ac.move0 , ac.clear,
+                                 '\r\n'.join(self.lines[self._vis_start:self._vis_start+self.height])]))
+        self.frame.write('\r\n')
+        
+    def move_up(self):
+        if self._vis_start :
+            self._vis_start -= 1
+            self.frame.write(''.join([ac.move0 , ac.insert1 ,
+                                self.lines[self._vis_start]]))
+        else:
+            self.callback(False)
+
+    def move_down(self):
+        try:
+            line = self.lines[self._vis_start+self.height]
+        except IndexError:
+            self.callback(True)
+            return
+        self._vis_start += 1
+        self.frame.write(''.join([ac.move2(self.height+1, 1), ac.kill_line,
+                            line, '\r\n']))
+
+    def goto_line(self, num):
+        try:
+            self.lines[num]
+        except IndexError:
+            return
+        self._vis_start = start
+        self.restore_screen()
+
+    def goto_first(self):
+        self._vis_start = 0
+        self.restore_screen()
+
+    def page_down(self):
+        self.goto_line(self._vis_start + self.height)
+
+    def page_up(self):
+        self.goto_line(self._vis_start - self.height)
+
+class SimpleTextBox(BaseTextBox):
+
     '''
     Widget for view long text.
     When user try move_up in first line, callback(False)
@@ -122,7 +183,7 @@ class LongTextBox(BaseTextBox):
             self.fix_bottom()
         else :
             self.s = start
-            self.refresh_all()
+            self.restore_screen()
 
     def move_up(self):
         if self.s :
@@ -137,12 +198,12 @@ class LongTextBox(BaseTextBox):
             self.callback(True)
 
     def goto_line(self,num):
-        if self.s == 0 and num < 0 :
-            self.callback(True)
-        if self.s == self.max and num > 0:
-            self.callback(False)
+        # if self.s == 0 and num < 0 :
+        #     self.callback(True)
+        # if self.s == self.max and num > 0:
+        #     self.callback(False)
         self.set_start(max(0,min(num,self.len-self.h)))
-        
+
     def goto_first(self):
         self.goto_line(0)
 
@@ -150,14 +211,15 @@ class LongTextBox(BaseTextBox):
         self.goto_line(self.len-self.h)
 
     def page_down(self):
-        self.goto_line(self.s - self.h)
-
-    def page_up(self):
         self.goto_line(self.s + self.h)
 
-    def refresh_all(self):
+    def page_up(self):
+        self.goto_line(self.s - self.h)
+
+    def restore_screen(self):
         self.write(ac.move0 + ac.clear)
         self.write(self.getscreen())
+        self.fix_bottom()
         
     def write(self,data):
         self.frame.write(data)

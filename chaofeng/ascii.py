@@ -263,7 +263,7 @@ k_backspace2 = chr(8)
 ks_delete = set((k_backspace, k_delete, k_backspace2))
 
 k_enter_linux = chr(13)
-k_enter_window = chr(10)
+k_enter_windows = chr(10)
 
 ks_finish = set(('\n','\r\n','\r','\r\x00'))
 
