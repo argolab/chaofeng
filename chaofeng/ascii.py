@@ -290,7 +290,7 @@ from unicodedata import east_asian_width
 def p(x):
     print x
 def srcwidth(x):
-    print ('x',x)
+    # print ('x',x)
     return 2 if east_asian_width(x) in "FAW" else 1
 
 is_gbk_zh = lambda d : '\x80' < d < '\xff'
