@@ -13,7 +13,7 @@ esc = '\x1b'
 
 w = lambda code: '\x1b[' + str(code) +'m'
 
-reset   = w(0)
+reset   = '\x1b[m'
 
 black   = w(30)
 red     = w(31)
