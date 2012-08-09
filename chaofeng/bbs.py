@@ -9,6 +9,7 @@ from chaofeng.g import mark
 import functools 
 # from eventlet.green.socket import getnameinfo,AI_NUMERICHOST
 import traceback
+import datetime
 import sys
 
 class FatalException(Exception):pass
@@ -284,10 +285,16 @@ class Server:
             sock.close()
                 
         s = self.sock
-        try:
-            eventlet.serve(s,new_connect,concurrency=self.max_connect)
-        except KeyboardInterrupt:
-            pass
+        while True:
+            try:
+                print 'RUNNING -- %s' % datetime.datetime.now().ctime()
+                eventlet.serve(s,new_connect,concurrency=self.max_connect)
+            except KeyboardInterrupt:
+                break
+            except Exception:
+                pass
+            except :
+                pass
 
 # def asynchronous(f):
 #     @functools.wraps(f)
