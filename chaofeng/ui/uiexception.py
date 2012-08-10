@@ -9,3 +9,6 @@ class SkipInputInterrupt(BaseUIInterrupt):
 
 class NullValueError(BaseUIInterrupt):
     pass
+
+class TableLoadNoDataError(BaseUIInterrupt):
+    pass

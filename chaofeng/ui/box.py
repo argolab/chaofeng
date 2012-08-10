@@ -3,7 +3,7 @@ import chaofeng.ascii as ac
 from chaofeng import sleep
 from eventlet import spawn as lanuch
 from itertools import cycle
-from uiexception import NullValueError
+from uiexception import NullValueError, TableLoadNoDataError
 
 class BaseTextBox(BaseUI):
     pass
@@ -224,181 +224,128 @@ class SimpleTextBox(BaseTextBox):
     def write(self,data):
         self.frame.write(data)
 
-class BaseBuffer(BaseUI):
+class PagedTable(BaseUI):
 
-    '''
-    Loader is a function that like loader(start_line, limit),
-    which will load [start_line:start_line+limit]
+    seq_lines = '\r\n' + ac.kill_line
+    empty_line = '\r\n~' + ac.kill_line
 
-    @vis_height : the visable height line in screen
-    @current    : current lines buffer display in screen
-    @bufstr     : current text in screen
-    
-    '''
-
-    seq_lines = '\r\n'+ac.kill_line
-    empty_line = seq_lines
-
-    def init(self):
-        raise Exception('Cannot instance a basebuffer')
-
-    def init_buf(self, loader, start_num, start_line, page_limit=20):
+    def init(self, loader, formater, start_num, start_line, height=20):
         '''
-        Init the buf. It should be called before everything.
+        start_num >= 0
         '''
+        self.height = height
         self.start_line = start_line
-        self.page_limit = page_limit
         self.loader = loader
-        if not self.set_page_start(start_num) :
-            raise NullValueError(u"Cannot get at least one record by funcion `%s` " % loader.func_name)
-
-    def fetch(self):
-        return self.current
-
-    def get_screen(self):
-        return ''.join((ac.move2(self.start_line, 1),
-                        self.seq_lines.join(self.current),
-                        self.empty_line*(self.page_limit-self.vis_height)))
-
-    def restore_screen(self):
-        self.frame.write(self.bufstr)
-
-    def set_page_start(self, start_num):
-        '''
-        Set the start_num as the first display line in the screen.
-        If start_num<0 , it'wll display 0 as first line.
-        If can't fetch any line, return False else return True.
-        '''
-        if start_num < 0 : start_num = 0
-        current = self.loader(start_num, self.page_limit)
-        if current :
-            self.start_num = start_num
-            self.vis_height = len(current)
-            self.current = current
-            self.bufstr = self.get_screen()
-            return True
-        else : return False
-        
-    def set_page_start_lazy(self, start_num):
-        if start_num < 0 : start_num = 0
-        if start_num == self.start_num:
-            return True
-        if self.set_page_start(start_num) :
-            self.restore_screen()
-            return True
-        else : return False
-
-    def restore_screen(self):
-        '''
-        Restore the buffer, display it in screen.
-        Notice that it will not reload the data, it just
-        print the buffer's cache in buffstr.
-        '''
-        self.frame.write(ac.move2(self.start_line, 1) + ac.kill_line + \
-                              ('\r\n'+ac.kill_line).join(self.current))
-
-    def page_up(self):
-        '''
-        Set previous page as display. Return True while has at least one line,
-        or return False while cannot fetch any things.
-        '''
-        return self.set_page_start_lazy(self.start_num - self.page_limit)
-
-    def page_down(self):
-        '''
-        Set the next page as display. Return True while has fetch something,
-        or return Flase whie it's out of range.
-        '''
-        return self.set_page_start_lazy(self.start_num + self.page_limit)
-
-    def goto_first(self):
-        return self.set_page_start_lazy(0)
-
-class PagedTable(BaseBuffer):
-
-    def init(self, loader, formater, start_num, start_line, page_limit=20):
-        self.reset_loader(loader, formater)
-        self.init_buf(self.get_wrapped, start_num, start_line, page_limit)
-        self.hover = -1
-        self.reset_cursor(start_num % page_limit)
-
-    def reset_loader(self, loader, formater):
-        self.table_loader = loader
         self.formater = formater
 
-    def get_wrapped(self, start, limit):
-        self.tabledata = self.table_loader(start, limit)
-        return map(self.formater, self.tabledata)
-
-    def reset_cursor_gently(self, hover):
+        if start_num < 0 : start_num = 0
+        r = start_num % self.height
+        try:
+            self.load_data(start_num - r)
+        except TableLoadNoDataError:
+            raise NullValueError
+        self.hover = r
+        
+    def safe_set_cursor(self, hover):
         if hover < 0 : hover = 0
-        if hover < self.vis_height :
+        if hover < self.index_limit:
             self.hover = hover
             return True
         else : return False
 
     def restore_cursor_gently(self):
-        self.frame.write(ac.move2(self.start_line + self.hover, 1)
-                         + '>')
+        self.frame.write(u'%s>' % ac.move2(self.start_line + self.hover, 1))
 
-    def reset_cursor(self, hover):
-        if self.reset_cursor_gently(hover):
-            self.frame.write(ac.movex_d + ' ' + ac.move2(self.start_line + self.hover, 1)
-                             + '>')
+    def _fix_cursor(self):
+        self.frame.write('%s %s>' % (ac.movex_d,
+                                     ac.move2(self.start_line + self.hover, 1)))
+                         
+    def load_data(self, start_num):
+        data = self.loader(start_num, self.height)
+        print ('sline', start_num, len(data))
+        if data :
+            print 'pp'
+            self.data = data
+            self.start_num = start_num
+            self.wrapper_data = [ self.formater(x) for x in self.data]
+            self.index_limit = len(self.data)
+            self._screen = ''.join([ac.move2(self.start_line, 1), ac.kill_line, 
+                                    self.seq_lines.join(self.wrapper_data),
+                                    self.empty_line*(self.height - self.index_limit)])
+        else:
+            raise TableLoadNoDataError
+
+    def safe_load_data(self, start_num):
+        if start_num < 0:
+            self.load_data(0)
+            self.hover = 0
+            self.restore_screen()
+            return True
+        else:
+            try:
+                self.load_data(start_num)
+            except TableLoadNoDataError:
+                return False
+            else:
+                return True
 
     def restore_screen(self):
-        super(PagedTable, self).restore_screen()
+        self.frame.write(self._screen)
         self.restore_cursor_gently()
-
+        
     def page_up(self):
-        super(PagedTable, self).page_up() and\
-            (self.hover >= self.vis_height) and \
-            self.reset_cursor(self.vis_height-1)
+        if self.safe_load_data(self.start_num - self.height) :
+            self.restore_screen()
 
     def page_down(self):
-        if super(PagedTable, self).page_down() :
-            self.reset_cursor(min(self.hover, self.vis_height-1))
-        else:
-            self.reset_cursor(self.vis_height)
+        if self.safe_load_data(self.start_num + self.height) :
+            self.restore_screen()
 
     def move_up(self):
-        if self.hover < 0 :
-            self.hover = 0
-        elif self.hover > 0:
-            self.reset_cursor(self.hover-1)
+        if self.hover :
+            self.hover -= 1
+            self._fix_cursor()
+        elif self.start_num and self.safe_load_data(self.start_num - self.height):
+            self.hover = self.index_limit - 1
+            self.restore_screen()
 
     def move_down(self):
-        if self.hover+1 <= self.vis_height :
-            self.reset_cursor(self.hover + 1)
-        else:
-            super(PagedTable, self).page_down() and\
-                self.reset_cursor(0)
+        print (self.hover, self.index_limit)
+        if self.hover+1 < self.index_limit :
+            self.hover += 1
+            self._fix_cursor()
+        elif self.safe_load_data(self.start_num + self.index_limit) :
+            print 'pass'
+            self.hover = 0
+            self.restore_screen()
 
     def goto(self, num):
-        s, h = divmod(num, self.page_limit)
-        self.set_page_start(s) and\
-            self.reset_cursor(h)
+        r = num - num % self.height
+        if self.safe_load_data(r) :
+            self.hover = num - r
+            self.restore_screen()
 
     def goto_first(self):
-        self.set_page_start(0) and\
-            self.reset_cursor(0)
+        if self.safe_load_data(0) :
+            self.hover = 0
+            self.restore_screen()
 
     def fetch(self):
-        return self.tabledata[self.hover]
+        return self.data[self.hover]
         
     def fetch_num(self):
         return self.start_num + self.hover
 
     def set_hover_data(self, data):
-        self.tabledata[self.hover] = data
+        self.data[self.hover] = data
         self.frame.write(''.join(('\r',
-                            ac.kill_line,
-                            self.formater(data))))
+                                  ac.kill_line,
+                                  self.formater(data))))
         self.restore_cursor_gently()
 
     def is_empty(self):
-        return self.vis_height <= 0
+        return self.index_limit > 0
 
     def reload(self):
-        self.set_page_start(self.start_num) and\
-            self.reset_cursor(self.hover)
+        self.safe_load_data(self.start_num) and \
+            self.restore_cursor_gently()

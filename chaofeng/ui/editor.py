@@ -126,7 +126,7 @@ class TextEditor(BaseUI):
 
     def move_point(self, row, col):
         # same fix_row
-        self._hover_row = row
+        self._hover_row = max(0, min(row, self.total_line()-1))
         self._hover_col = max(0, min(col, len(self.buf[row])))
         self._move_point(row, col)
             
