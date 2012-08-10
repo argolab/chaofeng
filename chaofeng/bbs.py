@@ -75,7 +75,7 @@ class Frame:
     def _socket_holder(self, buffer_size=1024):
         while True:
             data = self.sock.recv(buffer_size)
-            print repr(data)
+            # print repr(data)
             if len(data) == 1 and ascii.is_gbk_zh(data):  # Ugly
                 data += self.sock.recv(1)
             if data in ascii.CC:

@@ -12,7 +12,10 @@ class TextEditor(BaseUI):
 
     def init(self, text, row):
         if text:
-            self.buf = map(list, self.escape(text).split('\r\n')) + []
+            if isinstance(text, list) :
+                self.buf = text[:]
+            else:
+                self.buf = map(list, self.escape(text).split('\r\n')) + []
         else:
             self.buf = [[]]
         self._hover_row = row

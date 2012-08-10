@@ -227,7 +227,7 @@ class SimpleTextBox(BaseTextBox):
 class PagedTable(BaseUI):
 
     seq_lines = '\r\n' + ac.kill_line
-    empty_line = '\r\n~' + ac.kill_line
+    empty_line = '\r\n' + ac.kill_line
 
     def init(self, loader, formater, start_num, start_line, height=20):
         '''
