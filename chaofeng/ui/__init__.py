@@ -5,6 +5,5 @@ from box import Animation, LongTextBox, PagedTable, SimpleTextBox
 from inputs import BaseInput, VisableInput, EastAsiaTextInput, Password,\
     DatePicker, ColMenu, CheckBox, RadioButton
 
-from editor import *
-
+from editor import TextEditor, TextEditorAreaMixIn
 from uiexception import *

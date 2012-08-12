@@ -1,2 +1,0 @@
-from chaofeng import BaseBuffer
-
