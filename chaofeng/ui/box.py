@@ -259,10 +259,9 @@ class PagedTable(BaseUI):
     def _fix_cursor(self):
         self.frame.write('%s %s>' % (ac.movex_d,
                                      ac.move2(self.start_line + self.hover, 1)))
-                         
+
     def load_data(self, start_num):
         data = self.loader(start_num, self.height)
-        print ('sline', start_num, len(data))
         if data :
             print 'pp'
             self.data = data
@@ -276,18 +275,14 @@ class PagedTable(BaseUI):
             raise TableLoadNoDataError
 
     def safe_load_data(self, start_num):
-        if start_num < 0:
-            self.load_data(0)
-            self.hover = 0
-            self.restore_screen()
-            return True
+        if start_num < 0 :
+            return False
+        try:
+            self.load_data(start_num)
+        except TableLoadNoDataError:
+            return False
         else:
-            try:
-                self.load_data(start_num)
-            except TableLoadNoDataError:
-                return False
-            else:
-                return True
+            return True
 
     def restore_screen(self):
         self.frame.write(self._screen)
@@ -300,6 +295,9 @@ class PagedTable(BaseUI):
     def page_down(self):
         if self.safe_load_data(self.start_num + self.height) :
             self.restore_screen()
+        else:
+            self.hover = self.index_limit - 1
+            self._fix_cursor()
 
     def move_up(self):
         if self.hover :
@@ -315,11 +313,15 @@ class PagedTable(BaseUI):
             self.hover += 1
             self._fix_cursor()
         elif self.safe_load_data(self.start_num + self.index_limit) :
-            print 'pass'
             self.hover = 0
             self.restore_screen()
 
     def goto(self, num):
+        if num < 0:
+            self.load_data(0)
+            self.hover = 0
+            self.restore_screen()
+            return True
         r = num - num % self.height
         if self.safe_load_data(r) :
             self.hover = num - r
@@ -347,5 +349,6 @@ class PagedTable(BaseUI):
         return self.index_limit > 0
 
     def reload(self):
-        self.safe_load_data(self.start_num) and \
-            self.restore_cursor_gently()
+        self.load_data(self.start_num)
+        if self.hover >= self.index_limit:
+            self.hover = self.index_limit - 1

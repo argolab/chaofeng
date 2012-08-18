@@ -36,6 +36,9 @@ class GotoInterrupt(TravelInterrupt):
     def work(self, f):
         f.initialize(*self.args, **self.kwargs)
 
+    def __str__(self):
+        return '[RUNNER] goto /%s/ (%s) (%s)' % (self.to_where, self.args, self.kwargs)
+
 class WakeupInterrupt(TravelInterrupt):
 
     def __init__(self,frame):
@@ -55,7 +58,7 @@ class BadEndInterrupt(Exception): pass
 
 class Session:
 
-    def __init__(self,codecs='gbk'):
+    def __init__(self, codecs='gbk'):
         self._dict = {}
         self.set_charset(codecs)
         
@@ -233,18 +236,19 @@ class FinishFrame(Frame):
 
 class Server:
 
-    def __init__(self,root,host='0.0.0.0',port=5000,max_connect=5000):
+    def __init__(self,root,host='0.0.0.0', sessioncls=Session, port=5000,max_connect=5000):
         self.sock  = eventlet.listen((host,port))
         self.root  = root
         self.max_connect = max_connect
         self.sessions = []
+        self.sessioncls = sessioncls
         
     def run(self):
 
         root = self.root
 
         def new_connect(sock,addr):
-            session = Session()
+            session = self.sessioncls()
             session.ip,session.port = sock.getpeername()
             session.shortcuts = {}
 
@@ -272,6 +276,7 @@ class Server:
                 t.finish(e)
             except Exception,e :
                 print 'Bad Ending [%s]' % session.ip
+                print 'runner: %s ' % runner
                 traceback.print_exc()
                 try: now.clear()
                 except: traceback.print_exc()

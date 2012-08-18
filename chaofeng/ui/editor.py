@@ -1,3 +1,6 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
+
 from baseui import BaseUI
 import chaofeng.ascii as ac
 
@@ -5,7 +8,13 @@ class TextEditor(BaseUI):
 
     height = 23
     page_width = 75
-    
+
+    def hint(self, msg):
+        self.write(''.join([ac.move2(24,1),
+                            ac.kill_line,
+                            msg]))                            
+        self.fix_cursor()
+        
     def escape(self, text):
         assert isinstance(text, unicode)
         return text.replace(u'\x1b', u'*')
@@ -20,6 +29,7 @@ class TextEditor(BaseUI):
             self.buf = [[]]
         self._hover_row = row
         self._hover_col = 0
+        # self.two_esc_mode = True
         self.set_fpoint(row, 0)
 
     def reset(self, text, row):
@@ -222,6 +232,23 @@ class TextEditor(BaseUI):
         self._hover_col += 1
         self.fix_cursor()
 
+    def escape_charlist(self, string):
+        return list(string)
+
+    def insert_string(self, before, after):
+        before = self.escape_charlist(before)
+        after = self.escape_charlist(after)
+        self.buf[self._hover_row][self._hover_col:self._hover_col] = before + after
+        self._line_offset += reduce( lambda acc, d : acc + self.char_width(d),
+                                     before, 0)
+        if self._line_offset >= self.page_width:
+            self.set_fpoint(self._fix_row, self._fix_width+self.page_width)
+            self.restore_screen()
+        else:
+            self.restore_line_remain()
+        self._hover_col += len(before)
+        self.fix_cursor()
+        
     def is_end_of_line(self):
         # print (self._hover_col, len(self.buf[self._hover_row]) , 'end_of_line')
         return self._hover_col == len(self.buf[self._hover_row])
