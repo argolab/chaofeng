@@ -9,22 +9,28 @@ class TextEditor(BaseUI):
     height = 23
     page_width = 75
 
+    esc = ac.green + '*' + ac.reset
+
     def hint(self, msg):
         self.write(''.join([ac.move2(24,1),
                             ac.kill_line,
                             msg]))                            
         self.fix_cursor()
         
-    def escape(self, text):
-        assert isinstance(text, unicode)
-        return text.replace(u'\x1b', u'*')
+    # def escape(self, text):
+    #     assert isinstance(text, unicode)
+    #     return text.replace(u'\x1b', u'*')
 
     def init(self, text, row):
         if text:
             if isinstance(text, list) :
                 self.buf = text[:]
             else:
-                self.buf = map(list, self.escape(text).split('\r\n')) + []
+                self.buf = map(list, text.split('\r\n')) + []
+                for l in range(len(self.buf)) :
+                    for r in range(len(self.buf[l])) :
+                        if self.buf[l][r] == ac.esc:
+                            self.buf[l][r] = self.esc
         else:
             self.buf = [[]]
         self._hover_row = row
@@ -43,6 +49,8 @@ class TextEditor(BaseUI):
         return [''.join(line) for line in self.buf]
 
     def char_width(self, char):
+        if char == self.esc:
+            return 1
         return ac.srcwidth(char)
 
     def total_line(self):
@@ -67,6 +75,8 @@ class TextEditor(BaseUI):
                 if offset >= offset_limit:
                     break
             buf.append('\r\n')
+        if self.total_line() < row + height :
+            buf += ['~\r\n']*(row+height-self.total_line())
         return ''.join(buf)
 
     def get_line_start_index(self, num, offset_start):
@@ -370,4 +380,15 @@ class TextEditorAreaMixIn:
             self.merge_next_line()
         self.fix_cursor()
         return res
+
+    def insert_string_area(self, before, after):
+        before = self.escape_charlist(before)
+        after = self.escape_charlist(after)
+        (min_row, min_col), (max_row, max_col) = self.fix_range(*self.get_pair())
+        self.buf[max_row][max_col:max_col] = after
+        self.buf[min_row][min_col:min_col] = before
+        self.row = min_row
+        self.col = min_col
+        self.restore_screen()
+        self.fix_cursor()
 
