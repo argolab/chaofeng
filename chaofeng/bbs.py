@@ -218,7 +218,7 @@ class Frame:
         raise EndInterrupt
 
     def u(self,s):
-        return s.decode(self.session.charset)
+        return unicode(s, encoding=self.session.charset)
 
     def s(self,u):
         return u.encode(self.session.charset)

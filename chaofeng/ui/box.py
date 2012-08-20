@@ -249,6 +249,8 @@ class ListBox(BaseUI):
             if col >= 70:
                 col = 5
                 row += 1
+        if not text :
+            buf.append(ac.move2(row, col))
         if row < self.start_line + self.height - 1:
             buf += ['\r\n' + ac.kill_line] * (self.start_line + self.height - 1 - row)
         return ''.join(buf)
@@ -257,7 +259,7 @@ class ListBox(BaseUI):
         return self.data[self.hover]
 
     def update(self, text, data):
-        assert data
+        # assert data
         self.data = data
         self.text = text
         self._set_start_item(0, 0, self.start_line, 4)
