@@ -224,6 +224,102 @@ class SimpleTextBox(BaseTextBox):
     def write(self,data):
         self.frame.write(data)
 
+class ListBox(BaseUI):
+
+    def init(self, start_line, height=20):
+        self.height = height
+        self.page_limit = height * 3
+        self.start_line = start_line
+        self.data = None
+        self.text = None
+        
+    def fix_cursor(self):
+        self.frame.write(ac.move2(self.row, self.col))
+
+    def get_update_txt(self, text):
+        row = self.start_line
+        col = 5
+        buf = []
+        for d in text[:self.page_limit] :
+            if col == 5 :
+                buf.append('%s%s%s' % (ac.move2(row, col), ac.kill_to_end, d))
+            else:
+                buf.append('%s%s' % (ac.move2(row, col), d))
+            col += 25
+            if col >= 70:
+                col = 5
+                row += 1
+        if row < self.start_line + self.height - 1:
+            buf += ['\r\n' + ac.kill_line] * (self.start_line + self.height - 1 - row)
+        return ''.join(buf)
+
+    def fetch(self):
+        return self.data[self.hover]
+
+    def update(self, text, data):
+        assert data
+        self.data = data
+        self.text = text
+        self._set_start_item(0, 0, self.start_line, 4)
+        self.fix_cursor()
+
+    def _set_start_item(self, start, hover, row, col):
+        self.start_item = start
+        self.hover = hover
+        self.col = col
+        self.row = row
+        # self.frame.write(ac.clear)
+        self.frame.write(self.get_update_txt(self.text[start:start+self.page_limit]))
+
+    def move_down(self):
+        if self.hover + 3 < len(self.data) :
+            if self.row +1 == self.start_line + self.height:
+                self._set_start_item(self.start_item + self.page_limit,
+                                     self.hover + 3, self.start_line, self.col)
+            else:
+                self.hover += 3
+                self.row += 1
+            self.fix_cursor()
+
+    def move_up(self):
+        if self.hover - 3 >= 0 :
+            if self.row == self.start_line :
+                self._set_start_item(self.start_item - self.page_limit,
+                                     self.hover -3, self.start_line + self.height - 1, self.col)
+            else:
+                self.row -= 1
+                self.hover -= 3
+            self.fix_cursor()
+
+    def move_left(self):
+        if self.hover :
+            if self.col - 25 > 0 :
+                self.col -= 25
+                self.hover -= 1
+            elif self.row == self.start_line:
+                self._set_start_item(self.start_item - self.page_limit,
+                                     self.hover - 1, self.start_line + self.height -1,
+                                     self.col + 50)
+            else:
+                self.col += 50
+                self.row -= 1
+                self.hover -= 1
+            self.fix_cursor()
+
+    def move_right(self):
+        if self.hover +1 < len(self.data) :
+            if self.col + 25 < 75:
+                self.col += 25
+                self.hover += 1
+            elif self.row == self.start_line + self.height -1 :
+                self._set_start_item(self.start_item + self.page_limit,
+                                     self.hover + 1, self.start_line, self.col - 50)
+            else:
+                self.col -= 50
+                self.row += 1
+                self.hover += 1
+            self.fix_cursor()
+            
 class PagedTable(BaseUI):
 
     seq_lines = '\r\n' + ac.kill_line
@@ -263,7 +359,6 @@ class PagedTable(BaseUI):
     def load_data(self, start_num):
         data = self.loader(start_num, self.height)
         if data :
-            print 'pp'
             self.data = data
             self.start_num = start_num
             self.wrapper_data = [ self.formater(x) for x in self.data]
@@ -308,7 +403,6 @@ class PagedTable(BaseUI):
             self.restore_screen()
 
     def move_down(self):
-        print (self.hover, self.index_limit)
         if self.hover+1 < self.index_limit :
             self.hover += 1
             self._fix_cursor()
