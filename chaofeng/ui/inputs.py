@@ -229,7 +229,10 @@ class ColMenu(BaseUI):
 
     @staticmethod
     def tidy_data(data):
-        text, real, shortcuts = zip(*data)
+        if len(data) == 1 :
+            return [data[0][1]], [tuple(data[0][3])], {}, [data[0][0]]
+        args = zip(*data)
+        text, real, shortcuts = args[:3]
         shortcuts = dict( (k,i) for i,k in enumerate(shortcuts))
         pos = [ d[3] if len(d)==4 else None for d in data ]
         sx,sy = 0,0
@@ -349,85 +352,107 @@ class BaseSelectUI(BaseUI):
                 break
         return self.fetch()
 
-class RadioButton(BaseSelectUI):
+# class RadioButton(BaseSelectUI):
 
-    hover = 0
-    start_line = 3
-    start_col = 5
+#     hover = 0
+#     start_line = 3
+#     start_col = 5
     
+#     u'''
+#     options = [ (index, text) ... ]
+#     fetch : index
+#     display in form : text | <<NONE>>
+#     '''
+
+#     def init(self, options, default=None, background=u''):
+#         if default is None:
+#             default = 0
+#         super(RadioButton, self).init(options, background=background)
+        
+#     def formater(self, index, op):
+#         return u'%s%s %s' % (ac.move2(index + self.start_line, self.start_col),
+#                             chr(index+65), op)  ## +65 to covert into Upper
+
+#     def hook_hover(self, g):
+#         print ('g', g)
+#         self.hover = g
+#         self.frame.write(ac.move2(g + self.start_line, self.start_col+2))
+
+#     def restore_screen(self):
+#         super(RadioButton, self).restore_screen()
+#         self.frame.write(ac.move2(self.hover + self.start_line, self.start_col+2))
+
+#     def fetch(self):
+#         if self._options :
+#             return self.hover
+#         else:
+#             return None
+
+#     def fetch_str(self):
+#         f = self.fetch()
+#         if f:
+#             return self._options[f][1]
+#         else:
+#             return u'<<NONE>>'
+
+class Form(BaseUI):
+
     u'''
-    options = [ (index, text) ... ]
-    fetch : index
-    display in form : text | <<NONE>>
+    data :: [( name, text, handler) ]
+
+    handler may raise a ValueError, or return the value to save.
     '''
 
-    def init(self, options, default=None, background=u''):
+    def init(self, data, start_line=3, height=20, msg_line=22):
+        self.data = data
+        self.start_line = start_line
+        self.msg_line = 20
+        self.height = height
+
+    def read(self, default=None):
         if default is None:
-            default = 0
-        super(RadioButton, self).init(options, background=background)
-        
-    def formater(self, index, op):
-        return u'%s%s %s' % (ac.move2(index + self.start_line, self.start_col),
-                            chr(index+65), op)  ## +65 to covert into Upper
+            default = {}
+        for name,text,handler in self.data :
+            self.frame.write(''.join((ac.move2(self.start_line, 1),
+                                      ac.kill_line_n(self.height),
+                                      ac.move2(self.start_line, 1), text)))
+            while True:
+                self.frame.write(''.join([ac.move2(self.start_line + self.height, 1),
+                                         ac.kill_line]))
+                value = self.readline(default.get(name))
+                if value is False:
+                    return
+                try:
+                    value = handler(value)
+                except ValueError as e:
+                    self.frame.write('%s%s\r\n' % (ac.move2(self.msg_line, 1), e.message))
+                else:
+                    default[name] = value
+                    break
+        return default
 
-    def hook_hover(self, g):
-        print ('g', g)
-        self.hover = g
-        self.frame.write(ac.move2(g + self.start_line, self.start_col+2))
-
-    def restore_screen(self):
-        super(RadioButton, self).restore_screen()
-        self.frame.write(ac.move2(self.hover + self.start_line, self.start_col+2))
-
-    def fetch(self):
-        if self._options :
-            return self.hover
+    def readline(self, prefix, acceptable=ac.is_safe_char, finish=ac.ks_finish, buf_size=78):
+        '''
+        Return the string when `finish` key recv, return False while recv a k_ctrl_c
+        '''
+        if prefix is None:
+            buf = []
         else:
-            return None
-
-    def fetch_str(self):
-        f = self.fetch()
-        if f:
-            return self._options[f][1]
-        else:
-            return u'<<NONE>>'
-        
-class CheckBox(BaseSelectUI):
-
-    u'''
-    options = [ (text, is_select) ... ] ,is_select :: True | False
-    fetch :: a set that holds all index selected
-    display in form : text,text,text... | <<NONE>>
-    '''
-
-    start_line = 3
-    start_col = 5
-    op_width = 30
-
-    yes = u'Y'
-    no = u'X'
-    
-    def init(self, options, background=u''):
-        self.selected = [ x[1] for x in options]
-        super(CheckBox, self).init(options, background)
-
-    def formater(self, index, op):
-        return u'%s%s %*s %s' % (ac.move2(index+self.start_line, self.start_col), 
-                               chr(index+65), self.op_width, op[0],
-                               self.yes if self.selected[index] else self.no)
-
-    def hook_hover(self, index):
-        self.selected[index] = not self.selected[index]
-        self.frame.write( u'%s%s' % (ac.move2(index+self.start_line, self.op_width+self.start_col+3),
-                                    self.yes if self.selected[index] else self.no))
-
-    def fetch_str(self):
-        s = self.fetch()
-        if s :
-            return u','.join(self._options[x][0] for x in s)
-        else:
-            return u'<<NONE>>'
-
-    def fetch(self):
-        f = filter( lambda x: self.selected[x], range(len(self.selected)))
-        return set(f)
+            buf = list(prefix)
+            self.frame.write(prefix)
+        while True:
+            char = self.frame.read_secret()
+            if char in ac.ks_delete :
+                if buf :
+                    data = buf.pop()
+                    self.frame.write(ac.backspace * ac.srcwidth(data))
+                    continue
+            elif char in finish :
+                return u''.join(buf)
+            elif char == ac.k_ctrl_c:
+                return False
+            elif acceptable(char):
+                if len(buf) < buf_size:
+                    buf.append(char)
+                    self.frame.write(char)
+        return u''.join(buf)

@@ -270,6 +270,7 @@ ks_finish = set(('\n','\r\n','\r','\r\x00'))
 backspace = k_left+ ' '+k_left
 
 kill_line = '\x1b[K'
+kill_line_n = lambda x : '\r\n'.join(('\x1b[K',) * x)
 kill_to_end = '\x1b[K'
 
 import string

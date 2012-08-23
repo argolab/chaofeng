@@ -3,7 +3,7 @@
 from baseui import BaseUI
 from box import Animation, LongTextBox, PagedTable, SimpleTextBox, ListBox
 from inputs import BaseInput, VisableInput, EastAsiaTextInput, Password,\
-    DatePicker, ColMenu, CheckBox, RadioButton
+    DatePicker, ColMenu, Form#, CheckBox, RadioButton
 
 from editor import TextEditor, TextEditorAreaMixIn
 from uiexception import *

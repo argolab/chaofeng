@@ -242,7 +242,7 @@ class ListBox(BaseUI):
         buf = []
         for d in text[:self.page_limit] :
             if col == 5 :
-                buf.append('%s%s%s' % (ac.move2(row, col), ac.kill_to_end, d))
+                buf.append('%s%s    %s' % (ac.move2(row, 1), ac.kill_to_end, d))
             else:
                 buf.append('%s%s' % (ac.move2(row, col), d))
             col += 25
