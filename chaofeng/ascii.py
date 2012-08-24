@@ -204,23 +204,23 @@ line_beginning = '\r'
 
 # KeyCode
 
-k_up = '\x1b[A'
-k_down = '\x1b[B'
-k_right = '\x1b[C'
-k_left = '\x1b[D'
+k_up = u'\x1b[A'
+k_down = u'\x1b[B'
+k_right = u'\x1b[C'
+k_left = u'\x1b[D'
 
-k_page_up = '\x1b[5~'
-k_page_down = '\x1b[6~'
+k_page_up = u'\x1b[5~'
+k_page_down = u'\x1b[6~'
 
-k_home = '\x1b[1~'
-k_end = '\x1b[4~'
-k_ctrl_home = '\x13'
-k_ctrl_end = '\x14'
+k_home = u'\x1b[1~'
+k_end = u'\x1b[4~'
+k_ctrl_home = u'\x13'
+k_ctrl_end = u'\x14'
 
-k_end2 = '\x1b[F'
-k_ctrl_end2 = '\x1b[1;5F'
+k_end2 = u'\x1b[F'
+k_ctrl_end2 = u'\x1b[1;5F'
 
-k_cp = lambda c : chr(ord(c)-96)
+k_cp = lambda c : unicode(chr(ord(c)-96))
 k_ctrl_a = k_cp('a')
 k_ctrl_w = k_cp('w')
 k_ctrl_h = k_cp('h')
@@ -245,25 +245,25 @@ k_ctrl_y = k_cp('y')
 k_ctrl_q = k_cp('q')
 k_ctrl_x = k_cp('x')
 k_ctrl_k = k_cp('k')
-k_ctrl_f2 = '\x1b[12~'
-k_ctrl_S2 = '\x00'
-k_ctrl_S6 = '\x1e'
+k_ctrl_f2 = u'\x1b[12~'
+k_ctrl_S2 = u'\x00'
+k_ctrl_S6 = u'\x1e'
 k_ctrl_m = k_cp('m')
-k_ctrl_be = '\x1c'  # '\'
-k_c_a = '\x01'
-k_c_b = '\x02'
-k_c_c = '\x03'
-k_c_h = '\x08'
+k_ctrl_be = u'\x1c'  # '\'
+k_c_a = u'\x01'
+k_c_b = u'\x02'
+k_c_c = u'\x03'
+k_c_h = u'\x08'
 k_c_p = k_cp('p')
 
-k_backspace = chr(127)
-k_delete = '\x1b[3~'
-k_backspace2 = chr(8)
+k_backspace = unicode(chr(127))
+k_delete = u'\x1b[3~'
+k_backspace2 = unicode(chr(8))
 
 ks_delete = set((k_backspace, k_delete, k_backspace2))
 
-k_enter_linux = chr(13)
-k_enter_windows = chr(10)
+k_enter_linux = unicode(chr(13))
+k_enter_windows = unicode(chr(10))
 
 ks_finish = set(('\n','\r\n','\r','\r\x00'))
 
@@ -298,9 +298,45 @@ is_gbk_zh = lambda d : '\x80' < d < '\xff'
 
 dd = locals().copy()
 
+KEY_PCManX = {
+    '\x1bOA':k_up,
+    '\x1bOB':k_down,
+    '\x1bOD':k_left,
+    '\x1bOC':k_right,
+    '\x1b[5~':k_page_up,
+    '\x1b[6~':k_page_down,
+    '\x1b[1~':k_home,
+    '\x1b[4~':k_end,
+    '\x1bOQ':k_ctrl_f2,
+    '\x1c':k_ctrl_be,
+    '\x08':k_backspace,
+    '\x1b[3~':k_delete,
+    }
+
+KEY_GNOME_TERM = {
+    '\x1bOH': k_home,
+    '\x1bOF': k_end,
+    '\x1bO1;5Q': k_ctrl_be,
+    }
+
+KEY_CTerm = {
+    '\x13':k_ctrl_home,
+    '\x14':k_ctrl_end,
+    }
+
+KEY_STERM =  {
+    '\x1b[l': k_ctrl_f2,
+    '\x1c' : k_ctrl_be,
+    }
+    
 CC = {}
 for k,v in dd.items():
     if k.startswith('k_') :
         CC[v] = unicode(v)
+
+CC.update(KEY_PCManX)
+CC.update(KEY_GNOME_TERM)
+CC.update(KEY_CTerm)
+CC.update(KEY_STERM)
 
 ks_yes = set(('Y','y','Yes','yes'))
