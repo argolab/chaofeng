@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+
+'''
+    chaofeng.bbs
+    ~~~~~~~~~~~~
+
+    This module implements the core of chaofeng.
+'''
+
 __metaclass__ = type
 
 import eventlet
@@ -12,15 +21,28 @@ import traceback
 import datetime
 import sys
 
-class FatalException(Exception):pass
+class FatalException(Exception):
+    '''
+    A base class for finish a session.
+    '''
+    pass
 
 class BrokenConnection(FatalException):
+    '''
+    This exception will be raise while the remote connection is
+    close.
 
+    The ``id`` and ``port`` attribultes is the ip/port of the
+    remote connection,
+    '''
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
 
 class TravelInterrupt(Exception):
+    '''
+    A base class for travel across the frame.
+    '''
     pass
 
 class GotoInterrupt(TravelInterrupt):
@@ -50,11 +72,14 @@ class WakeupInterrupt(TravelInterrupt):
     def work(self, f):
         f.restore()
 
-class SafeInterrupt(Exception): pass
+class SafeInterrupt(Exception):
+    pass
 
-class EndInterrupt(Exception): pass
+class EndInterrupt(Exception):
+    pass
 
-class BadEndInterrupt(Exception): pass
+class BadEndInterrupt(Exception):
+    pass
 
 class Session:
 
@@ -312,7 +337,8 @@ class Server:
 #         return res
 #     return wrapper
 
-class AsyncTimeLimitError(Exception):pass
+class AsyncTimeLimitError(Exception):
+    pass
 
 def asynchronous(f):
     @functools.wraps(f)

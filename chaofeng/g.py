@@ -1,14 +1,15 @@
+# -*- coding: utf-8 -*-
+'''
+    chaofeng.g
+    ~~~~~~~~~~
+
+    Some collections for global variables and setting.
+'''
+
 __metaclass__ = type
 
-from chaofeng.ascii import *
-import os.path
-
-import codecs,traceback
-
 class Proxyer(dict):
-    '''
-    Dict callable , using to as decoration.
-    '''
+    '''A dict that allows for setting item as decoration. '''
     def __call__(self,name):
         def mark_inner(obj):
             self[name] = obj

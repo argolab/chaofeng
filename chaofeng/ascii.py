@@ -1,10 +1,12 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
-
 '''
-Some const and simple wrap of the ascii char to terminal. It include
-the color and font style, the IAC , the cursor control and some
-keycode.
+    chaofeng.ascii
+    ~~~~~~~~~~~~~~
+
+    Some const and simple wrapper of the ascii char to terminal. It include
+    the color and font style, the IAC , the cursor control and some
+    keycode.
 '''
 
 # Color
