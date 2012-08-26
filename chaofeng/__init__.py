@@ -18,7 +18,7 @@ from eventlet.greenthread import sleep
 from eventlet import spawn_after as setTimeout
 from eventlet import spawn as launch
 
-import .ascii
-import .ui
-import .g
+import ascii
+import ui
+import g
 from .bbs import Server,Frame,EndInterrupt,asynchronous
