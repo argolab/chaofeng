@@ -27,11 +27,9 @@ class TextEditor(BaseUI):
         ac.k_ctrl_e:"move_end_of_line",         ac.k_end:"move_end_of_line",
         ac.k_ctrl_s:"move_beginning_of_file",
         ac.k_ctrl_t:"move_end_of_file",
-        ac.esc:"insert_style",
         ac.k_ctrl_b:"page_up",      ac.k_page_up:"page_up",
         ac.k_ctrl_f:"page_down",    ac.k_page_down:"page_down",
-        },
-
+        }
 
     def hint(self, msg):
         self.write(''.join([ac.move2(24,1),
