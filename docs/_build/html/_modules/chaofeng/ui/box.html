@@ -1,0 +1,540 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>chaofeng.ui.box &mdash; cháofēng 0.09 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.09',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="cháofēng 0.09 documentation" href="../../../index.html" />
+    <link rel="up" title="chaofeng" href="../../chaofeng.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../../index.html">cháofēng 0.09 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../chaofeng.html" accesskey="U">chaofeng</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for chaofeng.ui.box</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">baseui</span> <span class="kn">import</span> <span class="n">BaseUI</span>
+<span class="kn">import</span> <span class="nn">chaofeng.ascii</span> <span class="kn">as</span> <span class="nn">ac</span>
+<span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">eventlet</span> <span class="kn">import</span> <span class="n">spawn</span> <span class="k">as</span> <span class="n">lanuch</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">cycle</span>
+<span class="kn">from</span> <span class="nn">uiexception</span> <span class="kn">import</span> <span class="n">NullValueError</span><span class="p">,</span> <span class="n">TableLoadNoDataError</span>
+
+<div class="viewcode-block" id="BaseTextBox"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.BaseTextBox">[docs]</a><span class="k">class</span> <span class="nc">BaseTextBox</span><span class="p">(</span><span class="n">BaseUI</span><span class="p">):</span>
+    <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Animation"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation">[docs]</a><span class="k">class</span> <span class="nc">Animation</span><span class="p">(</span><span class="n">BaseTextBox</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Call back self.frame.play_done wher playone is True.</span>
+<span class="sd">    data :: [ (text, time) ... ]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="Animation.init"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">start_line</span><span class="p">,</span> <span class="n">pause</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">=</span> <span class="n">start_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span> <span class="o">=</span> <span class="n">pause</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+</div>
+<div class="viewcode-block" id="Animation.write"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">ac</span><span class="o">.</span><span class="n">save</span><span class="p">,</span>
+                                  <span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                  <span class="n">data</span><span class="p">,</span>
+                                  <span class="n">ac</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span>
+                                  <span class="n">ac</span><span class="o">.</span><span class="n">restore</span><span class="p">)))</span>
+        </div>
+<div class="viewcode-block" id="Animation.prepare"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.prepare">[docs]</a>    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">playone</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">playone</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gener</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gener</span> <span class="o">=</span> <span class="n">cycle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="Animation.clear"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s">&#39;thread&#39;</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Animation.goto_one"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.goto_one">[docs]</a>    <span class="k">def</span> <span class="nf">goto_one</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gener</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">()</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">time</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">()</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sleep</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Animation.run"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">playone</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">playone</span><span class="p">)</span>
+        <span class="k">while</span> <span class="bp">True</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">goto_one</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Animation.launch"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.Animation.launch">[docs]</a>    <span class="k">def</span> <span class="nf">launch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">playone</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread</span> <span class="o">=</span> <span class="n">lanuch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="n">playone</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="LongTextBox"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox">[docs]</a><span class="k">class</span> <span class="nc">LongTextBox</span><span class="p">(</span><span class="n">BaseTextBox</span><span class="p">):</span>
+
+    <span class="n">height</span> <span class="o">=</span> <span class="mi">23</span>
+    
+<div class="viewcode-block" id="LongTextBox.init"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span> <span class="o">=</span> <span class="n">lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.reset_lines"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.reset_lines">[docs]</a>    <span class="k">def</span> <span class="nf">reset_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span> <span class="o">=</span> <span class="n">lines</span>
+        </div>
+<div class="viewcode-block" id="LongTextBox.set_start"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.set_start">[docs]</a>    <span class="k">def</span> <span class="nf">set_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">start</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">=</span> <span class="n">start</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.restore_screen"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.restore_screen">[docs]</a>    <span class="k">def</span> <span class="nf">restore_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">ac</span><span class="o">.</span><span class="n">move0</span> <span class="p">,</span> <span class="n">ac</span><span class="o">.</span><span class="n">clear</span><span class="p">,</span>
+                                 <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">])]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="LongTextBox.move_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.move_up">[docs]</a>    <span class="k">def</span> <span class="nf">move_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">ac</span><span class="o">.</span><span class="n">move0</span> <span class="p">,</span> <span class="n">ac</span><span class="o">.</span><span class="n">insert1</span> <span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span><span class="p">]]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.move_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.move_down">[docs]</a>    <span class="k">def</span> <span class="nf">move_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span><span class="p">,</span>
+                            <span class="n">line</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">]))</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.goto_line"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.goto_line">[docs]</a>    <span class="k">def</span> <span class="nf">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">num</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.goto_first"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.goto_first">[docs]</a>    <span class="k">def</span> <span class="nf">goto_first</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.page_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.page_down">[docs]</a>    <span class="k">def</span> <span class="nf">page_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="LongTextBox.page_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.LongTextBox.page_up">[docs]</a>    <span class="k">def</span> <span class="nf">page_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vis_start</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="SimpleTextBox"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox">[docs]</a><span class="k">class</span> <span class="nc">SimpleTextBox</span><span class="p">(</span><span class="n">BaseTextBox</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Widget for view long text.</span>
+<span class="sd">    When user try move_up in first line, callback(False)</span>
+<span class="sd">    will be called, and callback(True) will be when</span>
+<span class="sd">    move_down in last lin.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="SimpleTextBox.init"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">23</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        </div>
+<div class="viewcode-block" id="SimpleTextBox.set_text"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.set_text">[docs]</a>    <span class="k">def</span> <span class="nf">set_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">text</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">len</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+</div>
+    <span class="n">reset</span> <span class="o">=</span> <span class="n">set_text</span>
+
+<div class="viewcode-block" id="SimpleTextBox.getscreen"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.getscreen">[docs]</a>    <span class="k">def</span> <span class="nf">getscreen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getlines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.getscreen_with_raw"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.getscreen_with_raw">[docs]</a>    <span class="k">def</span> <span class="nf">getscreen_with_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getlines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="n">buf</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="SimpleTextBox.getlines"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.getlines">[docs]</a>    <span class="k">def</span> <span class="nf">getlines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">f</span><span class="p">,</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">len</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">[</span><span class="n">f</span><span class="p">:</span><span class="n">t</span><span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="s">&#39;~&#39;</span><span class="p">,]</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">len</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">buf</span><span class="p">[</span><span class="n">f</span><span class="p">:</span><span class="n">t</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.fix_bottom"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.fix_bottom">[docs]</a>    <span class="k">def</span> <span class="nf">fix_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.set_start"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.set_start">[docs]</a>    <span class="k">def</span> <span class="nf">set_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">start</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">&gt;</span> <span class="n">start</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">&lt;=</span> <span class="n">start</span> <span class="o">+</span> <span class="mi">10</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">-</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move0</span> <span class="o">+</span> <span class="n">ac</span><span class="o">.</span><span class="n">insertn</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\r</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getlines</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_bottom</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">start</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">+</span> <span class="mi">10</span><span class="p">):</span>
+            <span class="n">astart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="c"># Append Start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getlines</span><span class="p">(</span><span class="n">astart</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_bottom</span><span class="p">()</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.move_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.move_up">[docs]</a>    <span class="k">def</span> <span class="nf">move_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="SimpleTextBox.move_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.move_down">[docs]</a>    <span class="k">def</span> <span class="nf">move_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">len</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.goto_line"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.goto_line">[docs]</a>    <span class="k">def</span> <span class="nf">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">num</span><span class="p">):</span>
+        <span class="c"># if self.s == 0 and num &lt; 0 :</span>
+        <span class="c">#     self.callback(True)</span>
+        <span class="c"># if self.s == self.max and num &gt; 0:</span>
+        <span class="c">#     self.callback(False)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_start</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">min</span><span class="p">(</span><span class="n">num</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">len</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)))</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.goto_first"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.goto_first">[docs]</a>    <span class="k">def</span> <span class="nf">goto_first</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.goto_last"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.goto_last">[docs]</a>    <span class="k">def</span> <span class="nf">goto_last</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">len</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.page_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.page_down">[docs]</a>    <span class="k">def</span> <span class="nf">page_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.page_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.page_up">[docs]</a>    <span class="k">def</span> <span class="nf">page_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SimpleTextBox.restore_screen"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.restore_screen">[docs]</a>    <span class="k">def</span> <span class="nf">restore_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move0</span> <span class="o">+</span> <span class="n">ac</span><span class="o">.</span><span class="n">clear</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getscreen</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_bottom</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="SimpleTextBox.write"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.SimpleTextBox.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</div></div>
+<div class="viewcode-block" id="ListBox"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox">[docs]</a><span class="k">class</span> <span class="nc">ListBox</span><span class="p">(</span><span class="n">BaseUI</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ListBox.init"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_line</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span> <span class="o">=</span> <span class="n">height</span> <span class="o">*</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">=</span> <span class="n">start_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="bp">None</span>
+        </div>
+<div class="viewcode-block" id="ListBox.fix_cursor"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.fix_cursor">[docs]</a>    <span class="k">def</span> <span class="nf">fix_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">row</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="ListBox.get_update_txt"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.get_update_txt">[docs]</a>    <span class="k">def</span> <span class="nf">get_update_txt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">text</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">]</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="o">==</span> <span class="mi">5</span> <span class="p">:</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s%s</span><span class="s">    </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_to_end</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">),</span> <span class="n">d</span><span class="p">))</span>
+            <span class="n">col</span> <span class="o">+=</span> <span class="mi">25</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="o">&gt;=</span> <span class="mi">70</span><span class="p">:</span>
+                <span class="n">col</span> <span class="o">=</span> <span class="mi">5</span>
+                <span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span> <span class="p">:</span>
+            <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">buf</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">row</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="ListBox.fetch"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="ListBox.update"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c"># assert data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_start_item</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_cursor</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">_set_start_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">hover</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_item</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="n">hover</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">=</span> <span class="n">col</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">=</span> <span class="n">row</span>
+        <span class="c"># self.frame.write(ac.clear)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_update_txt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">]))</span>
+
+<div class="viewcode-block" id="ListBox.move_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.move_down">[docs]</a>    <span class="k">def</span> <span class="nf">move_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_set_start_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_item</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+=</span> <span class="mi">3</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_cursor</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ListBox.move_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.move_up">[docs]</a>    <span class="k">def</span> <span class="nf">move_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_set_start_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_item</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-=</span> <span class="mi">3</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_cursor</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ListBox.move_left"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.move_left">[docs]</a>    <span class="k">def</span> <span class="nf">move_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">-</span> <span class="mi">25</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">-=</span> <span class="mi">25</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_set_start_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_item</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">+</span> <span class="mi">50</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">+=</span> <span class="mi">50</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_cursor</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="ListBox.move_right"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.ListBox.move_right">[docs]</a>    <span class="k">def</span> <span class="nf">move_right</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">+</span> <span class="mi">25</span> <span class="o">&lt;</span> <span class="mi">75</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">+=</span> <span class="mi">25</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span><span class="mi">1</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_set_start_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_item</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_limit</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">-</span> <span class="mi">50</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">-=</span> <span class="mi">50</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fix_cursor</span><span class="p">()</span>
+            </div></div>
+<div class="viewcode-block" id="PagedTable"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable">[docs]</a><span class="k">class</span> <span class="nc">PagedTable</span><span class="p">(</span><span class="n">BaseUI</span><span class="p">):</span>
+
+    <span class="n">seq_lines</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span>
+    <span class="n">empty_line</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span>
+
+<div class="viewcode-block" id="PagedTable.init"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loader</span><span class="p">,</span> <span class="n">formater</span><span class="p">,</span> <span class="n">start_num</span><span class="p">,</span> <span class="n">start_line</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        start_num &gt;= 0</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">=</span> <span class="n">start_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loader</span> <span class="o">=</span> <span class="n">loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">formater</span> <span class="o">=</span> <span class="n">formater</span>
+
+        <span class="k">if</span> <span class="n">start_num</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">:</span> <span class="n">start_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">start_num</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">start_num</span> <span class="o">-</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">TableLoadNoDataError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NullValueError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="n">r</span>
+        </div>
+<div class="viewcode-block" id="PagedTable.safe_set_cursor"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.safe_set_cursor">[docs]</a>    <span class="k">def</span> <span class="nf">safe_set_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hover</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">hover</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">:</span> <span class="n">hover</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">hover</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="n">hover</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span> <span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="PagedTable.restore_cursor_gently"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.restore_cursor_gently">[docs]</a>    <span class="k">def</span> <span class="nf">restore_cursor_gently</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">_fix_cursor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">movex_d</span><span class="p">,</span>
+                                     <span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_line</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="PagedTable.load_data"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.load_data">[docs]</a>    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_num</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="p">(</span><span class="n">start_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">=</span> <span class="n">start_num</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wrapper_data</span> <span class="o">=</span> <span class="p">[</span> <span class="bp">self</span><span class="o">.</span><span class="n">formater</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_screen</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">ac</span><span class="o">.</span><span class="n">move2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_line</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span><span class="p">,</span> 
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">seq_lines</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wrapper_data</span><span class="p">),</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">empty_line</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TableLoadNoDataError</span>
+</div>
+<div class="viewcode-block" id="PagedTable.safe_load_data"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.safe_load_data">[docs]</a>    <span class="k">def</span> <span class="nf">safe_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_num</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">start_num</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">start_num</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">TableLoadNoDataError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="PagedTable.restore_screen"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.restore_screen">[docs]</a>    <span class="k">def</span> <span class="nf">restore_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_screen</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restore_cursor_gently</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="PagedTable.page_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.page_up">[docs]</a>    <span class="k">def</span> <span class="nf">page_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.page_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.page_down">[docs]</a>    <span class="k">def</span> <span class="nf">page_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fix_cursor</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.move_up"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.move_up">[docs]</a>    <span class="k">def</span> <span class="nf">move_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fix_cursor</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.move_down"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.move_down">[docs]</a>    <span class="k">def</span> <span class="nf">move_down</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fix_cursor</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.goto"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.goto">[docs]</a>    <span class="k">def</span> <span class="nf">goto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">num</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">num</span> <span class="o">-</span> <span class="n">num</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="n">num</span> <span class="o">-</span> <span class="n">r</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.goto_first"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.goto_first">[docs]</a>    <span class="k">def</span> <span class="nf">goto_first</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_load_data</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restore_screen</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.fetch"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="PagedTable.fetch_num"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.fetch_num">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_num</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_num</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span>
+</div>
+<div class="viewcode-block" id="PagedTable.set_hover_data"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.set_hover_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_hover_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">hover</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="se">\r</span><span class="s">&#39;</span><span class="p">,</span>
+                                  <span class="n">ac</span><span class="o">.</span><span class="n">kill_line</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">formater</span><span class="p">(</span><span class="n">data</span><span class="p">))))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restore_cursor_gently</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PagedTable.is_empty"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.is_empty">[docs]</a>    <span class="k">def</span> <span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</div>
+<div class="viewcode-block" id="PagedTable.reload"><a class="viewcode-back" href="../../../chaofeng.ui.html#chaofeng.ui.box.PagedTable.reload">[docs]</a>    <span class="k">def</span> <span class="nf">reload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_num</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hover</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_limit</span> <span class="o">-</span> <span class="mi">1</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../../index.html">cháofēng 0.09 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../chaofeng.html" >chaofeng</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, LTaoist.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

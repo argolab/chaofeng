@@ -1,0 +1,147 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>第1步：分解frame和模块化 &mdash; cháofēng 0.09 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.09',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="cháofēng 0.09 documentation" href="../index.html" />
+    <link rel="up" title="教程" href="index.html" />
+    <link rel="next" title="第2步：公共基类" href="base.html" />
+    <link rel="prev" title="第0步：介绍MMSSGG" href="introduction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="base.html" title="第2步：公共基类"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="第0步：介绍MMSSGG"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">cháofēng 0.09 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">教程</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="frame">
+<span id="design"></span><h1>第1步：分解frame和模块化<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>Frame的分解<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>恩，像很多普通的telnet软件一样，第一个画面是输入用户名和密码。
+如果没有，就创建一个新的用户。</p>
+<p>然后，应该是询问 留言还是查看留言 。</p>
+<p>如果是留言，那么就编辑留言然后保存。</p>
+<p>如果是查看留言，就看留言。</p>
+<p>对了，忘了我们还可以退出。</p>
+<p>那，我们有这些Frame来写（计划但不一定）：</p>
+<ol class="arabic simple">
+<li>WelcomeFrame</li>
+<li>MainMenuFrame</li>
+<li>PushMsgFrame</li>
+<li>GetMsgFrame</li>
+<li>FinishFrame</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>数据表示和存储<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>为了方便，我们就不用坑爹的数据库了。直接用个全局变量吧～～</p>
+<p>很容易想到，我们用用户名做key，用一个dict保存相应的密码和留言。</p>
+<p>准备好了吗，开始码代码咯！</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">第1步：分解frame和模块化</a><ul>
+<li><a class="reference internal" href="#id1">Frame的分解</a></li>
+<li><a class="reference internal" href="#id2">数据表示和存储</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">第0步：介绍MMSSGG</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="base.html"
+                        title="next chapter">第2步：公共基类</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/tutorial/design.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="base.html" title="第2步：公共基类"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="第0步：介绍MMSSGG"
+             >previous</a> |</li>
+        <li><a href="../index.html">cháofēng 0.09 documentation</a> &raquo;</li>
+          <li><a href="index.html" >教程</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, LTaoist.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
