@@ -11,6 +11,28 @@ class TextEditor(BaseUI):
 
     esc = ac.green + '*' + ac.reset
 
+    like_emacs_hotkeys = {
+        ac.k_left:"move_left",
+        ac.k_right:"move_right",                ac.k_ctrl_v:"move_right",
+        ac.k_up:"move_up",                      ac.k_ctrl_p:"move_up",
+        ac.k_down:"move_down",                  ac.k_ctrl_n:"move_down",
+        ac.k_delete:"delete",
+        ac.k_backspace:"backspace",             ac.k_ctrl_h:"backspace",
+        ac.k_backspace2:"backspace",
+        ac.k_ctrl_l:"restore_screen_iter",
+        ac.k_enter_linux:"new_line",
+        ac.k_enter_windows:"new_line",
+        ac.k_ctrl_k:"kill_to_end",
+        ac.k_ctrl_a:"move_beginning_of_line",   ac.k_home:"move_beginning_of_line",
+        ac.k_ctrl_e:"move_end_of_line",         ac.k_end:"move_end_of_line",
+        ac.k_ctrl_s:"move_beginning_of_file",
+        ac.k_ctrl_t:"move_end_of_file",
+        ac.esc:"insert_style",
+        ac.k_ctrl_b:"page_up",      ac.k_page_up:"page_up",
+        ac.k_ctrl_f:"page_down",    ac.k_page_down:"page_down",
+        },
+
+
     def hint(self, msg):
         self.write(''.join([ac.move2(24,1),
                             ac.kill_line,

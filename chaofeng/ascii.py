@@ -283,7 +283,7 @@ is_chchar = lambda c : c >= u'\u4e00' and c <= u'\u9fa5'
 is_safe_char = lambda data : \
     (data[0] >= u' ')  and \
     ((data[0] <= u'~') or (data[0] > u'\xff'))
-is_alnum = lambda d : ('0'<=d<='9') or ('a'<=d<='z') or ('A'<=d<='Z')
+isalnum = lambda d : ('0'<=d<='9') or ('a'<=d<='z') or ('A'<=d<='Z')
 isalpha = lambda x : x.isalpha()
 isdigit = lambda x : x.isdigit()
 
@@ -342,3 +342,18 @@ CC.update(KEY_CTerm)
 CC.update(KEY_STERM)
 
 ks_yes = set(('Y','y','Yes','yes'))
+
+__all__ = [
+    esc, reset, black, red, green, yellow, blue, magenta, cyan,
+    white, font, bg_black, bg_red, bg_green, bg_yellow, bg_white,
+    bold, underscore, inverted, italic, blink, outlook, art_code,
+    IAC, DO, WONT, WILL, ECHO, SGA, BINARY, theNULL, CMD_CHAR_PER,
+    CMD_LINEMODE, move0, movex, movey, movey_p, movey_n, movex_f,
+    movex_d, save, restore, clear0, clear1, clear, move2, insert1,
+    insertn, line_beginning, k_up, k_down, k_right, k_left, k_page_up,
+    k_page_down, k_home, k_end, k_ctrl_home, k_ctrl_end,
+    k_ctrl_a, k_ctrl_b, k_ctrl_z, k_backspace, k_delete, ks_delete,
+    ks_finish, kill_line, kill_line_n, kill_to_end, printable,
+    is_chchar, is_safe_char, isalnum, isalpha, isdigit, srcwidth,
+    is_gbk_zh, CC,
+    ]

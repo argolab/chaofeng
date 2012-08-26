@@ -12,6 +12,6 @@ setup(name='chaofeng',
       author='LTaoist',
       author_email='LTaoist6@gmail.com',
       url='https://github.com/LTaoist/chaofeng',
-      packages=['chaofeng'],
+      packages=['chaofeng', "chaofeng/ui"],
       install_requires=['eventlet'],
       )

@@ -83,23 +83,31 @@ class BadEndInterrupt(Exception):
 
 class Session:
 
+    '''A dict-like object with charset attribute.'''
+
     def __init__(self, codecs='gbk'):
         self._dict = {}
         self.set_charset(codecs)
         
     def __getitem__(self,name):
+        ''' S[name] --> Dict.get(name) '''
         return self._dict.get(name)
 
     def __setitem__(self,name,value):
+        ''' Like dict[name] = value. '''
         self._dict[name] = value
 
     def set_charset(self,codecs):
+        ''' Set the charset attribute. '''
         self.charset = codecs
 
 class Frame:
 
-    __metaclass__ = type
+    '''Subclass this class and define initialize() to make a frame.
 
+    Each session holds one and only one frame.
+    '''
+    
     def _socket_holder(self, buffer_size=1024):
         while True:
             data = self.sock.recv(buffer_size)
@@ -119,7 +127,7 @@ class Frame:
             else:
                 raise BrokenConnection(self.session.ip, self.session.port)
     
-    def __init__(self,server,sock,session):
+    def __init__(self, server, sock, session):
         self.session = session
         self.server = server
         self.sock = sock
@@ -127,70 +135,30 @@ class Frame:
         self._subframe = []
         self._loading = []
 
-    def load(self, uimod, *args, **kwargs):
-        m = uimod(self)
-        m.init(*args,**kwargs)
-        self._loading.append(m)
-        return m
-    
-    def get(self,data):
-        pass
+    def read_secret(self):
+        '''Get an char/char sequence from the remote client.
+        Basic useage:
 
-    def initialize(self):
-        pass
-
-    def refresh(self):
-        pass
-
-    def clear(self):
-        pass
-
-    def fetch(self):
-        pass
-
-    def run(self):
-        pass
-
-    def interrupt(self, e):
-        pass
-
-    def loop(self):
-        while True :
-            self.read()
-
-    def msg(self,msg,*args):
-        if self.debuglevel > 0:
-            print 'CONN(%s, %s):' % (self.session,ip, self.session.port)
-            if args :
-                print msg % args
-            else:
-                print msg
-
-    # def read(self):
-    #     if self.sockbuf :
-    #         return self.sockbuf.popleft()
-    #     else:
-    #         data = self.sock.recv(1024)
-    #         if not data:
-    #             raise BadEndInterrupt
-    #         if self.get : self.get(data)
-    #         try:
-    #             data = self.u(data)
-    #         except:
-    #             pass
-    #         else :
-    #             self.sockbuf.extend(data)
+            if self.read_secret == 'a' :
+                do_something_while_a_press()
+        
+        '''
+        return self.stream.next()
 
     def read(self):
+        '''Get an char/char sequence from the remote client.
+        Call self.get(char) and return char
+        '''
         char = self.stream.next()
         if self.get :
             self.get(char)
         return char
 
-    def read_secret(self):
-        return self.stream.next()
-        
     def pause(self,prompt=None):
+        '''Wait any character to continue.
+
+        :param prompt:  the prompt for this pause
+        '''
         if prompt is not None:
             self.write(prompt)
         self.read_secret()
@@ -201,6 +169,11 @@ class Frame:
         self.sock.send(data)
         
     def write(self,data):
+        '''Send the data to remote client.
+
+        :param data: the data want to send, must be unicode
+        '''
+        
         # if IAC in data:
             # data = data.replace(IAC, IAC+IAC)
         try:
@@ -218,7 +191,49 @@ class Frame:
             raise e
         
     def writeln(self,data=''):
+        '''Send the data to remote client, and append and '\r\n' to
+        start a new line.
+
+        :param data : the data want to send.
+        '''
         self.write(data + '\r\n')
+
+    def load(self, uimod, *args, **kwargs):
+        '''Load an UI module. Return the uimod.'''
+        m = uimod(self)
+        m.init(*args,**kwargs)
+        self._loading.append(m)
+        return m
+    
+    def get(self,data):
+        '''Hook for get a input.'''
+        pass
+
+    def initialize(self):
+        '''Hook for subclass initialization.'''
+        pass
+
+    def clear(self):
+        '''Hook at the end of current frame. These functions are
+        executed when this frame is finish, even if some exception
+        raise or the remote is close.
+        '''
+        pass
+
+    def interrupt(self, e):
+        pass
+
+    def loop(self):
+        while True :
+            self.read()
+
+    def msg(self,msg,*args):
+        if self.debuglevel > 0:
+            print 'CONN(%s, %s):' % (self.session,ip, self.session.port)
+            if args :
+                print msg % args
+            else:
+                print msg
 
     def _clear(self):
         for s in self._subframe : s.clear()
@@ -247,9 +262,6 @@ class Frame:
 
     def s(self,u):
         return u.encode(self.session.charset)
-
-    def fm(self,format_str,d_tuple):
-        return format_str % d_tuple
 
 @mark('finish')
 class FinishFrame(Frame):
