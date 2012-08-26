@@ -1,0 +1,430 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>快速上手 &mdash; cháofēng 0.09 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.09',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="cháofēng 0.09 documentation" href="index.html" />
+    <link rel="next" title="教程" href="tutorial/index.html" />
+    <link rel="prev" title="安装" href="installation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tutorial/index.html" title="教程"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="安装"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">cháofēng 0.09 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="quickstart">
+<span id="id1"></span><h1>快速上手<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>好了，我们要准备开始了。不过在开始以前，确认你已经装好了 Chaofeng ，
+否则请先阅读 <a class="reference internal" href="installation.html#installation"><em>安装</em></a> 。<a class="footnote-reference" href="#hello-eg" id="id2">[1]</a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">Server</span>
+
+<span class="k">class</span> <span class="nc">HelloFrame</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;Hello,World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span> <span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="n">HelloFrame</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>把他保存为 <cite>hello.py</cite> 然后用你的python解释器运行这个文件。</p>
+<div class="highlight-python"><pre>$ python hello.py
+RUNNING -- Sun Aug 26 08:55:54 2012</pre>
+</div>
+<p>然后，开启你的终端机或者仿真终端软件，然后telnet进入本机，比如:</p>
+<div class="highlight-python"><pre>$ telnet localhost 5000</pre>
+</div>
+<p>然后就会看到你的问候了。</p>
+<p>这段代码神马意思呢？</p>
+<ol class="arabic simple">
+<li>我们导入了 <tt class="docutils literal"><span class="pre">Frame</span></tt> , <tt class="docutils literal"><span class="pre">Server</span></tt> 类。</li>
+<li>构造了一个 <tt class="docutils literal"><span class="pre">Frame</span></tt> 的派生类 <tt class="docutils literal"><span class="pre">HelloFrame</span></tt> ，重写了他的 <tt class="docutils literal"><span class="pre">initialize</span></tt> 方法。</li>
+<li><tt class="docutils literal"><span class="pre">initialize</span></tt> 方法表明，向客户端发送 <tt class="docutils literal"><span class="pre">Hello,World!</span></tt> ，
+换行然后等到一个按键，最后关闭连接。</li>
+<li>将 <tt class="docutils literal"><span class="pre">HelloFrame</span></tt> 类作为第一个参数传给了 <tt class="docutils literal"><span class="pre">Server</span></tt> ，实例化一个 <tt class="docutils literal"><span class="pre">Server</span></tt> 类。</li>
+<li>让 <tt class="docutils literal"><span class="pre">Server</span></tt> 跑起来！</li>
+</ol>
+<p>按 control-C 可以停止服务器。</p>
+<table class="docutils footnote" frame="void" id="hello-eg" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>这个例子是抄袭 <a class="reference external" href="http://flask.pocoo.org/docs/quickstart/#a-minimal-application">flask</a> 的。</td></tr>
+</tbody>
+</table>
+<div class="section" id="frame">
+<span id="class-frame"></span><h2><tt class="docutils literal"><span class="pre">Frame</span></tt> : 盒子<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h2>
+<p>chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对应于一个使用的场景，
+定义了如何和用户交互。每个连接在任何时候都属于且只属于一个Frame。</p>
+<p>你需要重写Frame类的几个方法，来让这个Frame工作起来。一般地，你需要重写
+<tt class="docutils literal"><span class="pre">initialize</span></tt> ，当一个连接进入这个Frame的时候，就会调用这个方法。
+如果有需要，可以重写 <tt class="docutils literal"><span class="pre">clear</span></tt> 方法，当用户离开的时候，就会调用这个方法。</p>
+<p>通过 <tt class="docutils literal"><span class="pre">write</span></tt> 的方法来像客户端发送内容。每次调用都会直接将内容发送到客户端。
+另外，你可以通过 <tt class="docutils literal"><span class="pre">read</span></tt> 和 <tt class="docutils literal"><span class="pre">read_secret</span></tt> 方法来获得用户的输入。 <tt class="docutils literal"><span class="pre">read</span></tt>
+会等待用户的输入，并将输入的结果返回（参见 <a class="reference internal" href="#ascii"><em>ascii :来自ASCII的魔法</em></a> ），同时，
+这个字符会被发送到到Frame的 <tt class="docutils literal"><span class="pre">get</span></tt> 函数。而 <tt class="docutils literal"><span class="pre">read_secret</span></tt> 类似，
+但不会发送到 <tt class="docutils literal"><span class="pre">get</span></tt> 函数。</p>
+<p>如果一个Frame没有被关闭（调用 <tt class="docutils literal"><span class="pre">close</span></tt> 方法），在 <tt class="docutils literal"><span class="pre">initialize</span></tt> 结束后，
+将会调用 <tt class="docutils literal"><span class="pre">loop</span></tt> 方法。这个方法会不断地调用 <tt class="docutils literal"><span class="pre">read</span></tt> 方法。</p>
+<p>这有什么意义呢？在telnet软件中，大部份的行为都是 <tt class="docutils literal"><span class="pre">读取-相应动作执行</span></tt> 的形式，
+通过 <tt class="docutils literal"><span class="pre">get</span></tt> 函数这个统一的接口，你可以做很多事。比如，下面是一个简单的例子</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">Server</span>
+
+<span class="n">action</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;n&quot;</span><span class="p">:</span><span class="s">&quot;print_314&quot;</span><span class="p">,</span>
+    <span class="s">&quot;h&quot;</span><span class="p">:</span><span class="s">&quot;print_hello&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">HelloFrame</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_hello</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">action</span> <span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="n">char</span><span class="p">])()</span>
+
+    <span class="k">def</span> <span class="nf">print_314</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;3.14</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">print_hello</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;Hello,World!</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span> <span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="n">HelloFrame</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>原谅我使用这个无聊的例子。这个例子的亮点在于 <tt class="docutils literal"><span class="pre">get</span></tt> 函数。
+我们检查用户的输入是不是在 <tt class="docutils literal"><span class="pre">action</span></tt>  字典中，如果是，就调用相应的方法。</p>
+<p>然后， <tt class="docutils literal"><span class="pre">Server</span></tt> 类就没什么好玩的了。他会将每个连接自动进入传给他的那个参数。
+然后，你可以通过传入 <tt class="docutils literal"><span class="pre">port</span></tt> 关键字参数给他，设定要绑定的端口，一般地，
+这个端口默认是 <tt class="docutils literal"><span class="pre">5000</span></tt> ，一般telnet是使用 <tt class="docutils literal"><span class="pre">23</span></tt>。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">s</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="n">YourFrame</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">23</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>哈哈！你一定期望我实现了一个debug模式，然后传入debug关键字参数。
+遗憾的是我并没有实现……</p>
+</div>
+<div class="section" id="mark-goto">
+<span id="goto-mark"></span><h2><tt class="docutils literal"><span class="pre">mark</span></tt> , <tt class="docutils literal"><span class="pre">goto</span></tt> :在盒子间飞舞<a class="headerlink" href="#mark-goto" title="Permalink to this headline">¶</a></h2>
+<p>在介绍 <tt class="docutils literal"><span class="pre">goto</span></tt> 以前，请让我先介绍他的父亲 <tt class="docutils literal"><span class="pre">raw_goto</span></tt> 。很显然，
+我们不可能把全部的活放在一个Frame里面，于是，我们会希望能够有多个Frame。
+然后在这些Frame里面跳来跳去。没错，这就是 <tt class="docutils literal"><span class="pre">raw_goto</span></tt> 和 <tt class="docutils literal"><span class="pre">goto</span></tt> 要干的事。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">Server</span>
+
+<span class="k">class</span> <span class="nc">Frame1</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;I am frame1 XD </span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_goto</span><span class="p">(</span><span class="n">Frame2</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Frame2</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&quot;I am frame1&#39;s brother &gt;3&lt; </span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="n">Frame1</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>或许你可以猜测一下会发生什么？。。。对的:</p>
+<ol class="arabic simple">
+<li>首先进入了 <tt class="docutils literal"><span class="pre">Frame1</span></tt></li>
+<li>你得到了一句 <tt class="docutils literal"><span class="pre">Frame1</span></tt> 的自我介绍</li>
+<li>你按下了一个键，然后被 <tt class="docutils literal"><span class="pre">Frame1</span></tt> 推给了他的哥哥 <tt class="docutils literal"><span class="pre">Frame2</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">Frame2</span></tt> 告诉你他是 <tt class="docutils literal"><span class="pre">Frame1</span></tt> 的哥哥。</li>
+<li>你按下了一个键，然后连接关闭了。</li>
+</ol>
+<p>注意到 <tt class="docutils literal"><span class="pre">raw_goto</span></tt> 以后的语句，在本个 <tt class="docutils literal"><span class="pre">Frame</span></tt> 中的函数将不会被执行。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">raw_goto</span><span class="p">(</span><span class="n">AnotherFrame</span><span class="p">)</span>
+<span class="n">this_will_never_execute</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>因为你已经跳出这个Frame了！</p>
+<p>好了，下面我们来介绍 <tt class="docutils literal"><span class="pre">mark</span></tt> 叔叔和 <tt class="docutils literal"><span class="pre">goto</span></tt> 叔叔。你需要这样使用他们</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span><span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">chaofeng.g</span> <span class="kn">import</span> <span class="n">mark</span>
+
+<span class="nd">@mark</span><span class="p">(</span><span class="s">&#39;frame_one&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Frame1</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">xxxoo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="s">&#39;frame_two&#39;</span><span class="p">)</span>
+
+<span class="nd">@mark</span><span class="p">(</span><span class="s">&#39;frame_two&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Frame2</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+    <span class="n">do_something</span><span class="p">()</span>
+    <span class="c">#....</span>
+</pre></div>
+</div>
+<p>emm... 甜蜜蜜的语法糖。一般地，倾向于使用 <tt class="docutils literal"><span class="pre">mark</span></tt> 和 <tt class="docutils literal"><span class="pre">goto</span></tt> ， <tt class="docutils literal"><span class="pre">raw_goto</span></tt>
+让人感觉太raw了，而 <tt class="docutils literal"><span class="pre">mark</span></tt> 可以使用任意的字符串名来作为标记。而且装饰器看起来比较酷。</p>
+<p>emm... 为什么不可以在 <tt class="docutils literal"><span class="pre">goto</span></tt> 的时候带点参数呢？是的，这是可以的</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># +r -w -x</span>
+
+<span class="nd">@mark</span><span class="p">(</span><span class="s">&#39;say_hello&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">HelloFrame2</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Hello, </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Frame2</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="s">&#39;say_hello&#39;</span><span class="p">,</span> <span class="s">&#39;World&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我相信你已经懂了。</p>
+</div>
+<div class="section" id="session">
+<span id="id3"></span><h2><tt class="docutils literal"><span class="pre">session</span></tt> : 副作用也不错<a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h2>
+<p>不知道你有没有发现，还有一点小问题。比如，我们需要为每个session保存一个用户名，
+我们居然发现我们没有办法在 <tt class="docutils literal"><span class="pre">goto</span></tt> 以后保存。恩，我们需要一点类似于cookie的东西，
+它可以保存我们在 <tt class="docutils literal"><span class="pre">goto</span></tt> 的时候依然需要保留的某些东西。</p>
+<p>对，我们可以把这些要保存的东西在 <tt class="docutils literal"><span class="pre">goto</span></tt> 的时候作为参数传来传去。但是有时候有点
+side effect也是可以的。我们有 <tt class="docutils literal"><span class="pre">session</span></tt> 。他是一个字典。
+而且每个连接的session在 <tt class="docutils literal"><span class="pre">goto</span></tt> 的时候, 对这个连接来说， <tt class="docutils literal"><span class="pre">session</span></tt> 总是同一东西。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># +r -w -x</span>
+
+<span class="nd">@mark</span><span class="p">(</span><span class="s">&#39;get_username&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">GetUserNameFrame</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;World&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="s">&#39;say_hello&#39;</span><span class="p">)</span>
+
+<span class="nd">@mark</span><span class="p">(</span><span class="s">&#39;say_hello&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SayHelloFrame</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initizlize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;Hello, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>再次原谅我又使用了一个无聊的例子。感谢 World 先生的精彩演出。</p>
+<p>如果你对 <tt class="docutils literal"><span class="pre">self.session</span></tt> 是一个字典不满足，可以期待下次他有个华丽的变身。</p>
+</div>
+<div class="section" id="ascii-ascii">
+<span id="ascii"></span><h2><tt class="docutils literal"><span class="pre">ascii</span></tt> :来自ASCII的魔法<a class="headerlink" href="#ascii-ascii" title="Permalink to this headline">¶</a></h2>
+<p>telnet使用的交互方式异常简单。telnet只支持8种颜色（ANSI-Term)。
+而这些颜色都是由特殊的控制码来控制的。一般的命令行程序的库都会用一个更超级的封装层包装，
+以消除不同的term直接的差异。但chaofeng没有。chaofeng没有准备支持全部的term。事实上，
+大多数的term的实现都是 ANSI Term 的实现（vt100)。而且现在使用奇怪的term并不常见了，
+多数是使用终端机仿真机来使用telnet，也即是多数是vt100的。</p>
+<p>考虑这样的一个字符串:</p>
+<div class="highlight-python"><pre>\x1b[31m红色字符\x1b[m</pre>
+</div>
+<p>其中的x1b表示 ESC ，是一个不可见的字符。上面这个字符串在vt100终端机中（现代多数都是），
+就会显示一个红色的 <tt class="docutils literal"><span class="pre">红色字符</span></tt> 。</p>
+<p>chaofeng收集了一些常见的这些字符串，直接作为字符串或者函数收录在 <tt class="docutils literal"><span class="pre">chaofeng.ascii</span></tt> 模块中。
+你可以像这样使用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">chaofeng.ascii</span> <span class="kn">as</span> <span class="nn">ac</span>
+
+<span class="c">#...</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;</span><span class="si">%s</span><span class="s">Red Char</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">red</span><span class="p">,</span> <span class="n">ac</span><span class="o">.</span><span class="n">reset</span><span class="p">))</span>
+<span class="c">#...</span>
+</pre></div>
+</div>
+<p>一些常用的字符串和函数，和一些例子列在下面</p>
+<ul class="simple">
+<li>reset</li>
+<li>black, red, green, yellow, blue, magenta, cyan  # 字体色</li>
+<li>bg_black, bg_red, ...   # 背景色</li>
+<li>bold, underscore, inverted, italic, blink</li>
+<li>outlook(art_code[&#8216;black&#8217;], art_code[&#8216;bg_green&#8217;])</li>
+<li>move2(24, 1)  # 移动光标的位置到24,1</li>
+<li>save # 保存光标位置</li>
+<li>restore  # 恢复光标位置</li>
+<li>clear  # 清除屏幕</li>
+<li>insert1 # 插入一个空行</li>
+<li>kill_to_end # 删除至行尾</li>
+</ul>
+<p>另外，考虑我们按下了一系列的按键，比如我们输入了 <tt class="docutils literal"><span class="pre">SHIFT+h</span></tt>  <tt class="docutils literal"><span class="pre">x</span></tt>  <tt class="docutils literal"><span class="pre">BACKSPACE</span></tt>  <tt class="docutils literal"><span class="pre">e</span></tt>
+这里的BACKSPACE表示退格键。那么，实际上我们调用 <tt class="docutils literal"><span class="pre">frame.read</span></tt> 方法四次会得到 <tt class="docutils literal"><span class="pre">H</span></tt> <tt class="docutils literal"><span class="pre">x</span></tt>
+<tt class="docutils literal"><span class="pre">\x7f</span></tt> <tt class="docutils literal"><span class="pre">e</span></tt>。也就是，所有的按键都有一个实际的字符串与之对应。对此，chaofeng也使用了更直接的方法：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">char</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_secret</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="n">ac</span><span class="o">.</span><span class="n">k_delete</span> <span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;You press the DELETE&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>是的，我相信你看懂了。这些按键表示的字符串也全部包括在ascii模块中，而且全部的按键序列都以
+<tt class="docutils literal"><span class="pre">k_</span></tt> 为前缀。一些常用的列举如下：</p>
+<ul class="simple">
+<li>k_up, k_down, k_left, k_right  # 光标键</li>
+<li>k_ctrl_{k}   # CTRL+{k} 其中{k}是一个小写字母</li>
+<li>k_home, k_end, k_page_up, k_page_down</li>
+<li>ks_enter # 这是一个set！用 char in ks_enter 判断</li>
+</ul>
+</div>
+<div class="section" id="uimodule">
+<span id="id4"></span><h2><tt class="docutils literal"><span class="pre">uimodule</span></tt> :重用吧！古老的交互<a class="headerlink" href="#uimodule" title="Permalink to this headline">¶</a></h2>
+<p>恩，有点杯具，现在我们都不知道如何输入一个用户名（注意到 <tt class="docutils literal"><span class="pre">read</span></tt> 只能读一个字符）。</p>
+<p>这个其实是古老的telnet所设定的。因为telnet协议本身并没有对输入和用户交互有太多定义。
+事实上， <tt class="docutils literal"><span class="pre">输入</span></tt> 的实现是由服务器自己实现的，也即是需要手工模拟。</p>
+<p>幸运的是，chaofeng逐渐提供了一些好用的东西。我们把更用户交互相关的，
+或者重用率高的东西包装为一个 UI组件 。然后你可以来使用他们。下面是一个简单的例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">chaofeng.ui</span> <span class="kn">import</span> <span class="n">VisableInput</span>
+
+<span class="k">class</span> <span class="nc">HelloFrame</span><span class="p">(</span><span class="n">Frame</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">inputer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">VisableInput</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">inputer</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">prompt</span><span class="o">=</span><span class="s">u&#39;Please input you username:&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">u&#39;Hello, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">username</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>恩，应该很好懂:</p>
+<ol class="arabic simple">
+<li>从 <tt class="docutils literal"><span class="pre">chaofeng.ui</span></tt> 导入 <tt class="docutils literal"><span class="pre">VisableInput</span></tt> 组件</li>
+<li>在 <tt class="docutils literal"><span class="pre">HelloFrame</span></tt> 的 <tt class="docutils literal"><span class="pre">initialize</span></tt> 方法中加载( <tt class="docutils literal"><span class="pre">self.load</span></tt> )这个组件，
+将返回值绑定为 <tt class="docutils literal"><span class="pre">inputer</span></tt> 。其中，这个组件的buffer最多接受 <tt class="docutils literal"><span class="pre">20</span></tt> 个字符。</li>
+<li>让 <tt class="docutils literal"><span class="pre">inputer</span></tt> 来读，将读取的结果返回给 username</li>
+<li>输出。</li>
+</ol>
+<p>你可以试一下！是可以支持按 DEL 键来删除不想要的字符的！</p>
+<p>类似的，我们还有许多的 UI组件 ：</p>
+<ul class="simple">
+<li>输入： BaseInput, VisableInput, EastAsiaTextInput, Password, DatePicker</li>
+<li>ColMenu： 列菜单</li>
+<li>Form : 多个输入的交互处理</li>
+<li>Animation : 动画</li>
+<li>LongTextBox ： 长文本阅读器</li>
+<li>ListBox : 列表容器</li>
+<li>PagedTable：表格</li>
+<li>TextEditor：编辑器</li>
+</ul>
+<p>可能你会发现，这些组件都是直接从现在的telnet bbs上面抽象出来的。</p>
+<p>UI组件一般都有 <tt class="docutils literal"><span class="pre">read</span></tt> 方法，其实现中调用的是 <tt class="docutils literal"><span class="pre">frame.read_secret</span></tt> 也即是不会破坏
+<tt class="docutils literal"><span class="pre">get</span></tt> 函数的通用性。</p>
+</div>
+<div class="section" id="charset">
+<span id="id5"></span><h2><tt class="docutils literal"><span class="pre">charset</span></tt> :字符编码<a class="headerlink" href="#charset" title="Permalink to this headline">¶</a></h2>
+<p>所有数据在内部都应该使用unicode的。 <tt class="docutils literal"><span class="pre">write</span></tt> 和 <tt class="docutils literal"><span class="pre">read</span></tt> 方法会去查询
+<tt class="docutils literal"><span class="pre">self.session.charset</span></tt> 的值，将字符流解码为unicode然后在内部表示，输出时则编码为相应的字符流。</p>
+<p>特别的， <tt class="docutils literal"><span class="pre">read</span></tt> 和 <tt class="docutils literal"><span class="pre">read_secret</span></tt> 都会将收到的资料分解为单个字符（语义上为单个，比如 <tt class="docutils literal"><span class="pre">ac.k_up</span></tt>)
+不需要 <tt class="docutils literal"><span class="pre">for</span> <span class="pre">char</span> <span class="pre">in</span> <span class="pre">self.read()</span></tt> 这种形式的语句，因为 <tt class="docutils literal"><span class="pre">self.read()</span></tt> 的值语义上总是为单个的字符。</p>
+<p>不同的session使用不同的字符编码是可以的，只需要设置好相应的 <tt class="docutils literal"><span class="pre">self.session.charset</span></tt> 即可。同时，
+应该保证 <tt class="docutils literal"><span class="pre">self.write</span></tt> 的参数必须是 unicode 。但chaofeng不会检查，其他类型的后果是未定义的。</p>
+<p>解码的函数为 <tt class="docutils literal"><span class="pre">self.u</span></tt> ，这个函数会将传入的字符串，根据 <tt class="docutils literal"><span class="pre">self.session.charset</span></tt> 解码为unidoe，
+而编码的则是 <tt class="docutils literal"><span class="pre">self.s</span></tt> 。</p>
+<p>好了，快速上手到这里结束了，如果你还有兴趣，不妨继续阅读 <a class="reference internal" href="tutorial/index.html#tutorial"><em>教程</em></a> 。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">快速上手</a><ul>
+<li><a class="reference internal" href="#frame"><tt class="docutils literal"><span class="pre">Frame</span></tt> : 盒子</a></li>
+<li><a class="reference internal" href="#mark-goto"><tt class="docutils literal"><span class="pre">mark</span></tt> , <tt class="docutils literal"><span class="pre">goto</span></tt> :在盒子间飞舞</a></li>
+<li><a class="reference internal" href="#session"><tt class="docutils literal"><span class="pre">session</span></tt> : 副作用也不错</a></li>
+<li><a class="reference internal" href="#ascii-ascii"><tt class="docutils literal"><span class="pre">ascii</span></tt> :来自ASCII的魔法</a></li>
+<li><a class="reference internal" href="#uimodule"><tt class="docutils literal"><span class="pre">uimodule</span></tt> :重用吧！古老的交互</a></li>
+<li><a class="reference internal" href="#charset"><tt class="docutils literal"><span class="pre">charset</span></tt> :字符编码</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">安装</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial/index.html"
+                        title="next chapter">教程</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickstart.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="tutorial/index.html" title="教程"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="安装"
+             >previous</a> |</li>
+        <li><a href="index.html">cháofēng 0.09 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, LTaoist.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
