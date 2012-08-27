@@ -11,18 +11,18 @@ Hello,World!
 
 ```python
 
-    from chaofeng import Frame, Server
+from chaofeng import Frame, Server
 
-    class HelloFrame(Frame):
+class HelloFrame(Frame):
 
-        def initialize(self):
-            self.write('Hello,World!\r\n')
-            self.pause()
-            self.close()
+def initialize(self):
+    self.write('Hello,World!\r\n')
+    self.pause()
+    self.close()
 
-    if __name__ == '__main__' :
-        s = Server(HelloFrame)
-        s.run()
+if __name__ == '__main__' :
+    s = Server(HelloFrame)
+    s.run()
 ```
 
 Test it!
