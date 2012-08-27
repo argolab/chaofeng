@@ -50,7 +50,10 @@
   <div class="section" id="welcome-to-chaofeng-s-documentation">
 <h1>Welcome to cháofēng&#8217;s documentation!<a class="headerlink" href="#welcome-to-chaofeng-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p>cháofēng是一个简单的python telnet软件框架，主要用于开发bbs软件。</p>
-<p>这份文档目前仅包括 <a class="reference internal" href="quickstart.html#quickstart"><em>快速上手</em></a> 。API文档会在以后添加。</p>
+<p>这份文档目前包括 <a class="reference internal" href="installation.html#installation"><em>安装</em></a> 、 <a class="reference internal" href="quickstart.html#quickstart"><em>快速上手</em></a> 和 <a class="reference internal" href="tutorial/index.html#tutorial"><em>教程</em></a> 。
+API文档会在以后添加。首先，阅读 <a class="reference internal" href="installation.html#installation"><em>安装</em></a> 来安装。然后， <a class="reference internal" href="quickstart.html#quickstart"><em>快速上手</em></a>
+包括一个简单的说明，可以快速了解 chaofeng 的结构和提供的工具。最后如果你还有兴趣，
+阅读 <a class="reference internal" href="tutorial/index.html#tutorial"><em>教程</em></a> ，它完成了一个简单的bbs软件，</p>
 <p>Code talks! 下面是一个简单的例子。服务器将会向客户端输出一句Hello, World:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">chaofeng</span> <span class="kn">import</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">Server</span>
 <span class="kn">import</span> <span class="nn">chaofeng.ascii</span> <span class="kn">as</span> <span class="nn">c</span>
@@ -67,7 +70,8 @@
     <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>cháofēng使用 <a class="reference external" href="http://eventlet.net/">eventlet</a> 进行了底层的封装。</p>
+<p>cháofēng使用 <a class="reference external" href="http://eventlet.net/">eventlet</a> 进行了底层的封装，
+是一个 非阻塞I/O 和多协程的服务器框架。但您并不需要了解eventlet。</p>
 </div>
 <div class="section" id="contents">
 <h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
@@ -78,7 +82,8 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">教程</a></li>
 </ul>
 </div>
-<p>待我英语写作能力提供，再来添加API接口文档 &gt;w&lt;</p>
+<p>待我英语写作能力提高，再来添加API接口文档 &gt;w&lt; 这之前，
+或许你可以考虑阅读 <a class="reference external" href="https://github.com/argolab/chaofeng">chaofeng in github</a> 。</p>
 </div>
 <div class="section" id="contribute">
 <h1>Contribute<a class="headerlink" href="#contribute" title="Permalink to this headline">¶</a></h1>
