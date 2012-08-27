@@ -1,8 +1,8 @@
 cháofēng
 ========
 
-A low-level telnet bbs server framework base on eventlet.  It's made up with love
-and respect.
+A low-level telnet bbs server framework base on [eventlet](http://eventlet.net/).
+It's made up with love and respect.
 
 更多的文档点[这里](http://argolab.github.com/chaofeng/)。
 
@@ -12,7 +12,6 @@ Hello,World!
 ```python
 
     from chaofeng import Frame, Server
-    import chaofeng.ascii as c
 
     class HelloFrame(Frame):
 
@@ -30,13 +29,13 @@ Test it!
 --------
 
 ```bash
-    git clone https://github.com/argolab/chaofeng.git
-    cd chaofeng
-    python test.py
+git clone https://github.com/argolab/chaofeng.git
+cd chaofeng
+python test.py
 ```
 
 In client:
 
 ```bash
-    telnet localhost 5000
+telnet localhost 5000
 ```
