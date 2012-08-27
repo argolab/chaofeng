@@ -56,23 +56,24 @@
 chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对应于一个使用的场景，
 定义了如何和用户交互。每个连接在任何时候都属于且只属于一个Frame。
 
-你需要重写Frame类的几个方法，来让这个Frame工作起来。一般地，你需要重写
+你需要重写Frame类的几个方法，来让这个Frame工作。一般地，你需要重写
 ``initialize`` ，当一个连接进入这个Frame的时候，就会调用这个方法。
 如果有需要，可以重写 ``clear`` 方法，当用户离开的时候，就会调用这个方法。
 
-通过 ``write`` 的方法来像客户端发送内容。每次调用都会直接将内容发送到客户端。
-另外，你可以通过 ``read`` 和 ``read_secret`` 方法来获得用户的输入。 ``read``
-会等待用户的输入，并将输入的结果返回（参见 :ref:`ascii` ），同时，
-这个字符会被发送到到Frame的 ``get`` 函数。而 ``read_secret`` 类似，
+通过 ``write`` 方法向客户端发送内容。另外，你可以通过 ``read`` 和
+``read_secret`` 方法来获得用户的输入。 ``read``会等待用户的输入，
+并将输入的结果返回（参见 :ref:`ascii` ），同时，
+这个字符会被发送到到Frame的 ``get`` 函数执行。而 ``read_secret`` 类似，
 但不会发送到 ``get`` 函数。
 
 如果一个Frame没有被关闭（调用 ``close`` 方法），在 ``initialize`` 结束后，
-将会调用 ``loop`` 方法。这个方法会不断地调用 ``read`` 方法。
+将会进入一个不断read的死循环。事实上，大多数情况只需要重写 ``get``
+方法而不用显示地调用 ``read`` 和 ``read_secret`` 。
 
-这有什么意义呢？在telnet软件中，大部份的行为都是 ``读取-相应动作执行`` 的形式，
-通过 ``get`` 函数这个统一的接口，你可以做很多事。比如，下面是一个简单的例子
+这有什么意义呢？在telnet软件中，大部份的行为都是 ``读取-动作执行`` 的形式，
+你可以把一个frame的 ``读取-动作执行`` 集中地放在 ``get`` 函数这个统一的接口中。
 
-::
+下面是一个简单的例子::
 
     from chaofeng import Frame, Server
 
@@ -104,10 +105,8 @@ chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对�
 我们检查用户的输入是不是在 ``action``  字典中，如果是，就调用相应的方法。
 
 然后， ``Server`` 类就没什么好玩的了。他会将每个连接自动进入传给他的那个参数。
-然后，你可以通过传入 ``port`` 关键字参数给他，设定要绑定的端口，一般地，
-这个端口默认是 ``5000`` ，一般telnet是使用 ``23``。
-
-::
+然后，你可以通过传入 ``port`` 关键字参数给他，设定要绑定的端口，
+这个端口默认是 ``5000`` ，而一般telnet使用 ``23`` ::
 
     s = Server(YourFrame, port=23)
     s.run()
@@ -120,11 +119,10 @@ chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对�
 ``mark`` , ``goto`` :在盒子间飞舞
 ---------------------------------
 
-在介绍 ``goto`` 以前，请让我先介绍他的父亲 ``raw_goto`` 。很显然，
-我们不可能把全部的活放在一个Frame里面，于是，我们会希望能够有多个Frame。
-然后在这些Frame里面跳来跳去。没错，这就是 ``raw_goto`` 和 ``goto`` 要干的事。
-
-::
+在介绍 ``goto`` 以前，请让我先介绍他的父亲 ``raw_goto`` 。把全部的
+活动放在一个frame是可行的，但可能不是最好的方案。我们通过写多个frame，
+并在这些frame中切换，实现模块化。没错，这就是 ``raw_goto`` 和 ``goto``
+要干的事::
 
     from chaofeng import Frame, Server
 
@@ -145,7 +143,7 @@ chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对�
     s = Server(Frame1)
     s.run()
 
-或许你可以猜测一下会发生什么？。。。对的:
+或许你可以猜测一下会发生什么？
 
 1. 首先进入了 ``Frame1``
 2. 你得到了一句 ``Frame1`` 的自我介绍
@@ -153,18 +151,14 @@ chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对�
 4. ``Frame2`` 告诉你他是 ``Frame1`` 的哥哥。
 5. 你按下了一个键，然后连接关闭了。
 
-注意到 ``raw_goto`` 以后的语句，在本个 ``Frame`` 中的函数将不会被执行。
-
-::
+注意到 ``raw_goto`` 以后的语句，在本个 ``Frame`` 中的函数将不会被执行::
 
     raw_goto(AnotherFrame)
     this_will_never_execute()
 
 因为你已经跳出这个Frame了！
 
-好了，下面我们来介绍 ``mark`` 叔叔和 ``goto`` 叔叔。你需要这样使用他们
-
-::
+好了，下面我们来介绍 ``mark`` 叔叔和 ``goto`` 叔叔。你需要这样使用他们::
 
     from chaofeng import Frame,Server
     from chaofeng.g import mark
@@ -180,12 +174,10 @@ chaofeng的设定中，一个应用是由许多Frame构成的。一个Frame对�
         do_something()
         #....
 
-emm... 甜蜜蜜的语法糖。一般地，倾向于使用 ``mark`` 和 ``goto`` ， ``raw_goto``
-让人感觉太raw了，而 ``mark`` 可以使用任意的字符串名来作为标记。而且装饰器看起来比较酷。
+甜蜜蜜的语法糖！一般地，倾向于使用 ``mark`` 和 ``goto`` ，而 ``mark``
+可以使用任意的字符串名来作为标记。而且装饰器看起来比较酷。
 
-emm... 为什么不可以在 ``goto`` 的时候带点参数呢？是的，这是可以的
-
-::
+为什么不可以在 ``goto`` 的时候带点参数呢？是的，这是可以的::
 
     # +r -w -x
 
@@ -201,22 +193,18 @@ emm... 为什么不可以在 ``goto`` 的时候带点参数呢？是的，这是
             self.pause()
             self.goto('say_hello', 'World')
 
-我相信你已经懂了。
-
 .. _session:
 
 ``session`` : 副作用也不错
 --------------------------
 
 不知道你有没有发现，还有一点小问题。比如，我们需要为每个session保存一个用户名，
-我们居然发现我们没有办法在 ``goto`` 以后保存。恩，我们需要一点类似于cookie的东西，
+我们居然发现我们没有办法在 ``goto`` 以后保存。恩，我们需要一点类似于web cookie的东西，
 它可以保存我们在 ``goto`` 的时候依然需要保留的某些东西。
 
 对，我们可以把这些要保存的东西在 ``goto`` 的时候作为参数传来传去。但是有时候有点
 side effect也是可以的。我们有 ``session`` 。他是一个字典。
-而且每个连接的session在 ``goto`` 的时候, 对这个连接来说， ``session`` 总是同一东西。
-
-::
+而且每个连接的session在 ``goto`` 的时候, 对这个连接来说， ``session`` 总是同一东西::
 
     # +r -w -x
 
@@ -235,7 +223,7 @@ side effect也是可以的。我们有 ``session`` 。他是一个字典。
             self.pause()
             self.close()
 
-再次原谅我又使用了一个无聊的例子。感谢 World 先生的精彩演出。
+再次原谅我又使用了一个无聊的例子，但相信你可以由此明白 ``session`` 的作用了。
 
 如果你对 ``self.session`` 是一个字典不满足，可以期待下次他有个华丽的变身。
 
@@ -284,9 +272,8 @@ chaofeng收集了一些常见的这些字符串，直接作为字符串或者函
 
 另外，考虑我们按下了一系列的按键，比如我们输入了 ``SHIFT+h``  ``x``  ``BACKSPACE``  ``e``
 这里的BACKSPACE表示退格键。那么，实际上我们调用 ``frame.read`` 方法四次会得到 ``H`` ``x``
-``\x7f`` ``e``。也就是，所有的按键都有一个实际的字符串与之对应。对此，chaofeng也使用了更直接的方法：
-
-::
+``\x7f``  ``e`` 。也就是，所有的按键都有一个实际的字符串与之对应。对此，
+chaofeng也提供了一些简单的包装::
 
     char = self.read_secret()
     if char == ac.k_delete :
@@ -302,7 +289,7 @@ chaofeng收集了一些常见的这些字符串，直接作为字符串或者函
 
 .. _uimodule:
 
-``uimodule`` :重用吧！古老的交互
+``ui`` 模块 :重用吧！古老的交互
 --------------------------------
 
 恩，有点杯具，现在我们都不知道如何输入一个用户名（注意到 ``read`` 只能读一个字符）。
@@ -310,10 +297,8 @@ chaofeng收集了一些常见的这些字符串，直接作为字符串或者函
 这个其实是古老的telnet所设定的。因为telnet协议本身并没有对输入和用户交互有太多定义。
 事实上， ``输入`` 的实现是由服务器自己实现的，也即是需要手工模拟。
 
-幸运的是，chaofeng逐渐提供了一些好用的东西。我们把更用户交互相关的，
-或者重用率高的东西包装为一个 UI组件 。然后你可以来使用他们。下面是一个简单的例子：
-
-::
+chaofeng逐渐提供了一些这方面的组件。我们把更用户交互相关的，
+或者重用率高的东西包装为一个 UI组件 。然后你可以来使用他们。下面是一个简单的例子::
 
     from chaofeng import Frame, Server
     from chaofeng.ui import VisableInput
@@ -330,8 +315,8 @@ chaofeng收集了一些常见的这些字符串，直接作为字符串或者函
 1. 从 ``chaofeng.ui`` 导入 ``VisableInput`` 组件
 2. 在 ``HelloFrame`` 的 ``initialize`` 方法中加载( ``self.load`` )这个组件，
    将返回值绑定为 ``inputer`` 。其中，这个组件的buffer最多接受 ``20`` 个字符。
-3. 让 ``inputer`` 来读，将读取的结果返回给 username
-4. 输出。
+3. 让 ``inputer`` 来读，将读取的结果返回给 ``username``
+4. 输出 ``username`` 。
 
 你可以试一下！是可以支持按 DEL 键来删除不想要的字符的！
 
@@ -340,16 +325,13 @@ chaofeng收集了一些常见的这些字符串，直接作为字符串或者函
 * 输入： BaseInput, VisableInput, EastAsiaTextInput, Password, DatePicker
 * ColMenu： 列菜单
 * Form : 多个输入的交互处理
-* Animation : 动画
+* Animation : ascii动画
 * LongTextBox ： 长文本阅读器
 * ListBox : 列表容器
 * PagedTable：表格
 * TextEditor：编辑器
 
 可能你会发现，这些组件都是直接从现在的telnet bbs上面抽象出来的。
-
-UI组件一般都有 ``read`` 方法，其实现中调用的是 ``frame.read_secret`` 也即是不会破坏
-``get`` 函数的通用性。
 
 .. _charset:
 
@@ -363,7 +345,7 @@ UI组件一般都有 ``read`` 方法，其实现中调用的是 ``frame.read_sec
 不需要 ``for char in self.read()`` 这种形式的语句，因为 ``self.read()`` 的值语义上总是为单个的字符。
 
 不同的session使用不同的字符编码是可以的，只需要设置好相应的 ``self.session.charset`` 即可。同时，
-应该保证 ``self.write`` 的参数必须是 unicode 。但chaofeng不会检查，其他类型的后果是未定义的。
+应该保证 ``self.write`` 的参数必须是 unicode 。但chaofeng不会检查，write其他类型的后果是未定义的。
 
 解码的函数为 ``self.u`` ，这个函数会将传入的字符串，根据 ``self.session.charset`` 解码为unidoe，
 而编码的则是 ``self.s`` 。
