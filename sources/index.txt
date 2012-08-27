@@ -16,7 +16,6 @@ API文档会在以后添加。首先，阅读 :ref:`installation` 来安装。�
 Code talks! 下面是一个简单的例子。服务器将会向客户端输出一句Hello, World::
 
     from chaofeng import Frame, Server
-    import chaofeng.ascii as c
     
     class HelloFrame(Frame):
     
