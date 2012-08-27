@@ -1,54 +1,42 @@
 cháofēng
 ========
 
-Cháofēng is a simple telnet bbs framework for python
+A low-level telnet bbs server framework base on eventlet.  It's made up with love
+and respect.
 
-更多的文档写在[wiki](https://github.com/LTaoist/chaofeng/wiki)里.
+更多的文档点[这里](http://argolab.github.com/chaofeng/)。
 
-INSTALL
---------
-
-'''bash
-git clone https://github.com/argolab/chaofeng.git
-cd chaofeng
-sudo python2 setup.py install
-'''
-
-Hello, world
+Hello,World!
 ------------
 
-Here is a simple example app for Chaofeng :
-
 ```python
-from chaofeng import Frame, Server
-import chaofeng.ascii as c
 
-class Hello(Frame):
+    from chaofeng import Frame, Server
+    import chaofeng.ascii as c
 
-    def initialize(self):
-        self.write('Hello,World!\r\n')
-        self.pause()
-        self.close()
+    class HelloFrame(Frame):
 
-if __name__ == '__main__' :
-    s = Server(Hello)
-    s.run()
+        def initialize(self):
+            self.write('Hello,World!\r\n')
+            self.pause()
+            self.close()
+
+    if __name__ == '__main__' :
+        s = Server(HelloFrame)
+        s.run()
 ```
 
-作为服务器，你可以这样运行：
+Test it!
+--------
 
 ```bash
-python /path-to-the-file/
+    git clone https://github.com/argolab/chaofeng.git
+    cd chaofeng
+    python test.py
 ```
 
-作为客户端，你可以这样(在linux)：
+In client:
 
 ```bash
-telnet host port
-```
-
-一般的，本地的host是填loaclhost，port是5000。所以如果服务器是本地的话，你可以：
-
-```bash
-telnet localhost 5000
+    telnet localhost 5000
 ```
