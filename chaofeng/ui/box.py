@@ -411,6 +411,8 @@ class PagedTable(BaseUI):
         elif self.safe_load_data(self.start_num + self.index_limit) :
             self.hover = 0
             self.restore_screen()
+        else:
+            self.goto(0)
 
     def goto(self, num):
         if num < 0:
@@ -420,7 +422,7 @@ class PagedTable(BaseUI):
             return True
         r = num - num % self.height
         if self.safe_load_data(r) :
-            self.hover = num - r
+            self.hover = min(num - r, self.index_limit-1)
             self.restore_screen()
 
     def goto_first(self):
