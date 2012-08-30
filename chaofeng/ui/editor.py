@@ -252,6 +252,8 @@ class TextEditor(BaseUI):
         self.fix_cursor()
 
     def insert_char(self, char):
+        if not isinstance(char, unicode):  ############ ugly but work
+            return
         self.buf[self._hover_row].insert(self._hover_col, char)
         self._line_offset += self.char_width(char)
         if self._line_offset >= self.page_width:
