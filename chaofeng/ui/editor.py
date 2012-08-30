@@ -9,7 +9,7 @@ class TextEditor(BaseUI):
     height = 23
     page_width = 75
 
-    esc = ac.green + '*' + ac.reset
+    esc = unicode(ac.green + '*' + ac.reset)
 
     like_emacs_hotkeys = {
         ac.k_left:"move_left",
@@ -263,6 +263,17 @@ class TextEditor(BaseUI):
             self.restore_line_remain()
         self._hover_col += 1
         self.fix_cursor()
+
+    def force_insert_char(self, char):
+        self.buf[self._hover_row].insert(self._hover_col, char)
+        self._line_offset += self.char_width(char)
+        if self._line_offset >= self.page_width:
+            self.set_fpoint(self._fix_row, self._fix_width+self.page_width)
+            self.restore_screen()
+        else:
+            self.restore_line_remain()
+        self._hover_col += 1
+        self.fix_cursor()      
 
     def escape_charlist(self, string):
         return list(string)
