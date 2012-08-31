@@ -271,11 +271,15 @@ class ColMenu(BaseUI):
     def move_down(self):
         if self.hover + 1 < self.len :
             self.hover += 1
+        else:
+            self.hover = 0
         self.refresh_cursor()
 
     def move_up(self):
         if self.hover > 0 :
             self.hover -= 1
+        else:
+            self.hover = self.len - 1
         self.refresh_cursor()
 
     def move_left(self):
