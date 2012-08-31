@@ -204,6 +204,8 @@ class ColMenu(BaseUI):
         ac.k_up : u"move_up",
         ac.k_left : u"move_left",
         ac.k_right : u"move_right",
+        ac.k_page_up : u"goto_first",
+        ac.k_page_down : u"goto_last",
         }
 
     def init(self):
@@ -300,6 +302,14 @@ class ColMenu(BaseUI):
 
     def move_to(self,which):
         self.hover = which
+        self.refresh_cursor()
+
+    def goto_first(self):
+        self.hover = 0
+        self.refresh_cursor()
+
+    def goto_last(self):
+        self.hover = self.len - 1
         self.refresh_cursor()
 
 class BaseSelectUI(BaseUI):
