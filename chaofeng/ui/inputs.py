@@ -63,6 +63,9 @@ class BaseInput(BaseUI):
 
     def acceptable(self, data):  ##################### Need to reload.
         return True
+
+    def set_acceptable(self, acceptabler):
+        self.acceptable = acceptabler
             
     def read(self, buf, prompt, termitor):
         u'''

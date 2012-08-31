@@ -107,7 +107,7 @@ class Frame:
 
     Each session holds one and only one frame.
     '''
-    
+                
     def _socket_holder(self, buffer_size=1024):
         while True:
             data = self.sock.recv(buffer_size)
@@ -143,13 +143,26 @@ class Frame:
                 do_something_while_a_press()
         
         '''
-        return self.stream.next()
+        char = self.stream.next()
+        if char == ascii.esc:
+            buf = [char]
+            tree = ascii.ascii_tree[char]
+            while True:
+                tchar = self.stream.next()
+                buf.append(tchar)
+                if tchar in tree:
+                    tree = tree[tchar]
+                    if not tree:
+                        return u''.join(buf)
+                else:
+                    return u''.join(buf)
+        return char
 
     def read(self):
         '''Get an char/char sequence from the remote client.
         Call self.get(char) and return char
         '''
-        char = self.stream.next()
+        char = self.read_secret()
         if self.get :
             self.get(char)
         return char

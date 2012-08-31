@@ -332,14 +332,27 @@ KEY_STERM =  {
     }
     
 CC = {}
+ALL_SCI = []
 for k,v in dd.items():
     if k.startswith('k_') :
         CC[v] = unicode(v)
+        if isinstance(v, unicode) and v[0] == esc:
+            ALL_SCI.append(unicode(v))
 
 CC.update(KEY_PCManX)
 CC.update(KEY_GNOME_TERM)
 CC.update(KEY_CTerm)
 CC.update(KEY_STERM)
+
+def update_tree(d, n):
+    for char in n :
+        if char not in d :
+            d[char] = {}
+        d = d[char]
+
+ascii_tree = {}
+for c in ALL_SCI:
+    update_tree(ascii_tree, c)
 
 ks_yes = set(('Y','y','Yes','yes'))
 
