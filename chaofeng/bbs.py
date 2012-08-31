@@ -115,6 +115,7 @@ class Frame:
             if len(data) == 1 and ascii.is_gbk_zh(data):  # Ugly
                 data += self.sock.recv(1)
             if data in ascii.CC:
+                # print ascii.CC[data]
                 yield ascii.CC[data]
             elif data:
                 try:
@@ -156,6 +157,8 @@ class Frame:
                         return u''.join(buf)
                 else:
                     return u''.join(buf)
+        if char == u'\x1b\0':
+            return u'\x1b'
         return char
 
     def read(self):

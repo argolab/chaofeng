@@ -339,6 +339,7 @@ for k,v in dd.items():
         if isinstance(v, unicode) and v[0] == esc:
             ALL_SCI.append(unicode(v))
 
+CC['\x1b'] = u'\x1b\0'
 CC.update(KEY_PCManX)
 CC.update(KEY_GNOME_TERM)
 CC.update(KEY_CTerm)
