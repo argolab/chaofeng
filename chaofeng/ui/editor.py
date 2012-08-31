@@ -56,7 +56,7 @@ class TextEditor(BaseUI):
         self._hover_row = row
         self._hover_col = 0
         # self.two_esc_mode = True
-        self.set_fpoint(row, 0)
+        self.set_fpoint(max(row-12, 0), 0)
 
     def reset(self, text, row):
         self.init(text, row)
