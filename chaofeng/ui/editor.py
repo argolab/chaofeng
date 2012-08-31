@@ -328,6 +328,16 @@ class TextEditor(BaseUI):
             del self.buf[self._hover_row][self._hover_col:]
             self.write(ac.kill_to_end)
 
+    def kill_whole_line(self):
+        self.move_beginning_of_line()
+        self.kill_to_end()
+        self.kill_to_end()
+        # del self.buf[self._hover_row]
+        # if self._hover_row >= len(self.buf) :
+        #     self._hover_row = len(self.buf) - 1
+        # self._hover_col = 0
+        # self.restore_screen_remain()            
+
     def new_line(self):
         tmp = self.buf[self._hover_row][self._hover_col:]
         if tmp:
@@ -398,21 +408,22 @@ class TextEditorAreaMixIn:
 
     def remove_area(self):
         (min_row, min_col), (max_row, max_col) = self.fix_range(*self.get_pair())
+        max_col += 1
         self.move_point(min_row, min_col)
         if min_row == max_row:
-            res = ''.join(self.buf[min_row][min_col:max_col])
+            # res = ''.join(self.buf[min_row][min_col:max_col])
             del self.buf[min_row][min_col:max_col]
             self.write(''.join([ac.kill_to_end, ''.join(self.buf[min_row][min_col:])]))
         else:
-            res = ''.join(self.buf[max_row][:max_col] +
-                          self.buf[min_row+1:max_row] +
-                          self.buf[min_row][min_col:])            
+            # res = ''.join(''.join(self.buf[max_row][:max_col]),
+                          # reduce(list.__add__, self.buf[min_row+1:max_row], [])
+                          # self.buf[min_row][min_col:])
             del self.buf[max_row][:max_col]
             del self.buf[min_row+1:max_row]
             del self.buf[min_row][min_col:]
             self.merge_next_line()
         self.fix_cursor()
-        return res
+        # return res
 
     def insert_string_area(self, before, after):
         before = self.escape_charlist(before)
