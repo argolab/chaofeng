@@ -211,9 +211,15 @@ class SimpleTextBox(BaseTextBox):
         self.goto_line(self.len-self.h)
 
     def page_down(self):
+        if self.len < self.h :
+            self.callback(True)
+        if self.s + self.h == self.len :
+            self.callback(True)
         self.goto_line(self.s + self.h)
 
     def page_up(self):
+        if self.s == 0:
+            self.callback(False)
         self.goto_line(self.s - self.h)
 
     def restore_screen(self):
