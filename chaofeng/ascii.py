@@ -86,7 +86,7 @@ bell = chr(7)
 
 # IAC and her firends
 
-print_ab = chr(32)
+# print_ab = chr(32)
 
 IAC  = chr(255) # "Interpret As Command"
 DO   = chr(253)
@@ -252,11 +252,6 @@ k_ctrl_S2 = u'\x00'
 k_ctrl_S6 = u'\x1e'
 k_ctrl_m = k_cp('m')
 k_ctrl_be = u'\x1c'  # '\'
-k_c_a = u'\x01'
-k_c_b = u'\x02'
-k_c_c = u'\x03'
-k_c_h = u'\x08'
-k_c_p = k_cp('p')
 
 k_backspace = unicode(chr(127))
 k_delete = u'\x1b[3~'
@@ -270,6 +265,8 @@ k_enter_windows = unicode(chr(10))
 ks_finish = set(('\n','\r\n','\r','\r\x00'))
 
 backspace = k_left+ ' '+k_left
+
+remove = chr(8)
 
 kill_line = '\x1b[K'
 kill_line_n = lambda x : '\r\n'.join(('\x1b[K',) * x)
@@ -299,6 +296,11 @@ def srcwidth(x):
 is_gbk_zh = lambda d : '\x80' < d < '\xff'
 
 dd = locals().copy()
+
+for c in range(ord('a'), ord('z')+1):
+    cc = chr(c)
+    if k_cp(cc) not in dd:
+        dd[k_cp(cc)] = '^%s' % cc.upper()
 
 KEY_PCManX = {
     '\x1bOA':k_up,
@@ -333,11 +335,20 @@ KEY_STERM =  {
     
 CC = {}
 ALL_SCI = []
+ASCII_MAP = {}
 for k,v in dd.items():
     if k.startswith('k_') :
         CC[v] = unicode(v)
         if isinstance(v, unicode) and v[0] == esc:
             ALL_SCI.append(unicode(v))
+    elif (isinstance(v, unicode) or isinstance(v, str)) :
+        try:
+            unicode(v)
+            unicode(k)
+        except UnicodeDecodeError:
+            pass
+        else:
+            ASCII_MAP[unicode(v)] = unicode(k)
 
 CC['\x1b'] = u'\x1b\0'
 CC.update(KEY_PCManX)
