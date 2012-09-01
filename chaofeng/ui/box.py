@@ -422,6 +422,7 @@ class PagedTable(BaseUI):
             self.goto(0)
 
     def goto(self, num):
+        print ('goto', num)
         if num < 0:
             self.load_data(0)
             self.hover = 0
