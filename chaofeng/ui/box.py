@@ -456,3 +456,20 @@ class PagedTable(BaseUI):
         self.load_data(self.start_num)
         if self.hover >= self.index_limit:
             self.hover = self.index_limit - 1
+
+class FinitePagedTable(PagedTable):
+
+    def init(self, loader, formater, get_last, start_num, start_line, height=20):
+        self.get_last = get_last
+        super(FinitePagedTable, self).init(loader, formater, start_num,
+                                           start_line, height)
+
+    def goto_last(self):
+        last = self.get_last()
+        self.goto(last)
+
+    def move_up(self):
+        if (self.start_num == 0 ) and (self.hover == 0 ) :
+            self.goto_last()
+        else:
+            super(FinitePagedTable, self).move_up()
