@@ -281,10 +281,10 @@ class Frame:
         raise EndInterrupt
 
     def u(self,s):
-        return unicode(s, encoding=self.session.charset)
+        return unicode(s, encoding=self.session.charset, errors='replace')
 
     def s(self,u):
-        return u.encode(self.session.charset)
+        return u.encode(self.session.charset, errors='replace')
 
 @mark('finish')
 class FinishFrame(Frame):

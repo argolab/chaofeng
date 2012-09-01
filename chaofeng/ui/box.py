@@ -349,7 +349,8 @@ class PagedTable(BaseUI):
             self.load_data(start_num - r)
         except TableLoadNoDataError:
             raise NullValueError
-        self.hover = r
+        self.hover = min(r, self.index_limit - 1)
+        print ('hover,', self.hover)
         
     def safe_set_cursor(self, hover):
         if hover < 0 : hover = 0
@@ -422,7 +423,6 @@ class PagedTable(BaseUI):
             self.goto(0)
 
     def goto(self, num):
-        print ('goto', num)
         if num < 0:
             self.load_data(0)
             self.hover = 0
@@ -432,6 +432,9 @@ class PagedTable(BaseUI):
         if self.safe_load_data(r) :
             self.hover = min(num - r, self.index_limit-1)
             self.restore_screen()
+        else:
+            self.goto_first()
+        print ('goto,', num, self.index_limit, self.hover)
 
     def goto_first(self):
         if self.safe_load_data(0) :
