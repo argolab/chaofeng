@@ -107,6 +107,8 @@ class Frame:
 
     Each session holds one and only one frame.
     '''
+
+    WRITE_BUFFER_SIZE = 4096
                 
     def _socket_holder(self, buffer_size=1024):
         while True:
@@ -135,6 +137,7 @@ class Frame:
         self.stream = self._socket_holder()
         self._subframe = []
         self._loading = []
+        self._buffer = []
 
     def read_secret(self):
         '''Get an char/char sequence from the remote client.
@@ -144,6 +147,8 @@ class Frame:
                 do_something_while_a_press()
         
         '''
+        if self._buffer:
+            self.fflush()
         char = self.stream.next()
         if char == ascii.esc:
             buf = [char]
@@ -179,22 +184,15 @@ class Frame:
             self.write(prompt)
         self.read_secret()
 
-    def write_raw(self,data):
-        # if IAC in data:
-            # data = data.replace(IAC, IAC+IAC)
-        self.sock.send(data)
+    # def write_raw(self,data):
+    #     # if IAC in data:
+    #         # data = data.replace(IAC, IAC+IAC)
+    #     self.sock.send(data)
         
-    def write(self,data):
-        '''Send the data to remote client.
-
-        :param data: the data want to send, must be unicode
-        '''
-        
-        # if IAC in data:
-            # data = data.replace(IAC, IAC+IAC)
+    def push(self, data):
         try:
-            self.sock.send(self.s(data))
-        except IOError,e :
+            data = self.s(data)
+        except IOError, e:
             traceback.print_exc()
             self.close()
         except Exception,e:
@@ -205,14 +203,23 @@ class Frame:
         except:
             traceback.print_exc()
             raise e
-        
-    def writeln(self,data=''):
-        '''Send the data to remote client, and append and '\r\n' to
-        start a new line.
+        else:
+            self._buffer.append(data)
+        if len(data) > self.WRITE_BUFFER_SIZE :
+            self.fflush()
 
-        :param data : the data want to send.
-        '''
-        self.write(data + '\r\n')
+    def fflush(self):
+        self.sock.send(''.join(self._buffer))
+        self._buffer = []
+
+    def write(self,data):
+        self.push(data)
+        self.fflush()
+
+    def writeln(self,data=''):
+        self.push(data)
+        self.push('\r\n')
+        self.fflush()
 
     def load(self, uimod, *args, **kwargs):
         '''Load an UI module. Return the uimod.'''

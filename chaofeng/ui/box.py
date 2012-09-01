@@ -86,14 +86,15 @@ class LongTextBox(BaseTextBox):
         self._vis_start = start
 
     def restore_screen(self):
-        self.frame.write(''.join([ac.move0 , ac.clear,
+        self.frame.push(''.join([ac.move0 , ac.clear,
                                  '\r\n'.join(self.lines[self._vis_start:self._vis_start+self.height])]))
-        self.frame.write('\r\n')
+        self.frame.push('\r\n')
+        self.frame.fflush()
         
     def move_up(self):
         if self._vis_start :
             self._vis_start -= 1
-            self.frame.write(''.join([ac.move0 , ac.insert1 ,
+            self.frame.push(''.join([ac.move0 , ac.insert1 ,
                                 self.lines[self._vis_start]]))
         else:
             self.callback(False)
@@ -105,7 +106,7 @@ class LongTextBox(BaseTextBox):
             self.callback(True)
             return
         self._vis_start += 1
-        self.frame.write(''.join([ac.move2(self.height+1, 1), ac.kill_line,
+        self.frame.push(''.join([ac.move2(self.height+1, 1), ac.kill_line,
                             line, '\r\n']))
 
     def goto_line(self, num):
@@ -169,16 +170,16 @@ class SimpleTextBox(BaseTextBox):
             return
         if (self.s > start) and (self.s <= start + 10):
             offset = self.s - start
-            self.write(ac.move0 + ac.insertn(offset) + '\r')
-            self.write('\r\n'.join(self.getlines(start,self.s)))
+            self.push(ac.move0 + ac.insertn(offset) + '\r')
+            self.push('\r\n'.join(self.getlines(start,self.s)))
             self.s = start
             self.fix_bottom()
         elif (start > self.s) and (start <= self.s + 10):
             astart = self.s + self.h # Append Start
-            self.write(ac.move2(self.h+1,0))
-            self.write(ac.kill_line)
-            self.write('\r\n'.join(self.getlines(astart, start + self.h)))
-            self.write('\r\n')
+            self.push(ac.move2(self.h+1,0))
+            self.push(ac.kill_line)
+            self.push('\r\n'.join(self.getlines(astart, start + self.h)))
+            self.push('\r\n')
             self.s = start
             self.fix_bottom()
         else :
@@ -223,12 +224,12 @@ class SimpleTextBox(BaseTextBox):
         self.goto_line(self.s - self.h)
 
     def restore_screen(self):
-        self.write(ac.move0 + ac.clear)
-        self.write(self.getscreen())
+        self.push(ac.move0 + ac.clear)
+        self.push(self.getscreen())
         self.fix_bottom()
         
-    def write(self,data):
-        self.frame.write(data)
+    def push(self,data):
+        self.frame.push(data)
 
 class ListBox(BaseUI):
 
@@ -240,7 +241,7 @@ class ListBox(BaseUI):
         self.text = None
         
     def fix_cursor(self):
-        self.frame.write(ac.move2(self.row, self.col))
+        self.frame.push(ac.move2(self.row, self.col))
 
     def get_update_txt(self, text):
         row = self.start_line
@@ -276,8 +277,8 @@ class ListBox(BaseUI):
         self.hover = hover
         self.col = col
         self.row = row
-        # self.frame.write(ac.clear)
-        self.frame.write(self.get_update_txt(self.text[start:start+self.page_limit]))
+        # self.frame.push(ac.clear)
+        self.frame.push(self.get_update_txt(self.text[start:start+self.page_limit]))
 
     def move_down(self):
         if self.hover + 3 < len(self.data) :
@@ -358,10 +359,10 @@ class PagedTable(BaseUI):
         else : return False
 
     def restore_cursor_gently(self):
-        self.frame.write(u'%s>' % ac.move2(self.start_line + self.hover, 1))
+        self.frame.push(u'%s>' % ac.move2(self.start_line + self.hover, 1))
 
     def _fix_cursor(self):
-        self.frame.write('%s %s>' % (ac.movex_d,
+        self.frame.push('%s %s>' % (ac.movex_d,
                                      ac.move2(self.start_line + self.hover, 1)))
 
     def load_data(self, start_num):
@@ -388,7 +389,7 @@ class PagedTable(BaseUI):
             return True
 
     def restore_screen(self):
-        self.frame.write(self._screen)
+        self.frame.push(self._screen)
         self.restore_cursor_gently()
         
     def page_up(self):
@@ -444,7 +445,7 @@ class PagedTable(BaseUI):
 
     def set_hover_data(self, data):
         self.data[self.hover] = data
-        self.frame.write(''.join(('\r',
+        self.frame.push(''.join(('\r',
                                   ac.kill_line,
                                   self.formater(data))))
         self.restore_cursor_gently()

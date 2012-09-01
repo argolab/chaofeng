@@ -32,9 +32,9 @@ class TextEditor(BaseUI):
         }
 
     def hint(self, msg):
-        self.write(''.join([ac.move2(24,1),
-                            ac.kill_line,
-                            msg]))                            
+        self.frame.push(''.join([ac.move2(24,1),
+                                 ac.kill_line,
+                                 msg]))                            
         self.fix_cursor()
         
     # def escape(self, text):
@@ -76,9 +76,6 @@ class TextEditor(BaseUI):
     def total_line(self):
         return len(self.buf)
 
-    def write(self, data):
-        self.frame.write(data)
-
     def visible_width(self, charlist):
         return reduce(lambda acc,obj : acc+self.char_width(obj),
                       charlist, 0)
@@ -110,13 +107,13 @@ class TextEditor(BaseUI):
     def restore_screen(self):
         text = self.get_text_area(self._fix_row, self._fix_width, self.height, self.page_width,
                              buf=[ac.move0, ac.clear])
-        self.write(text)
+        self.frame.push(text)
         start_index = self.get_line_start_index(self._hover_row, self._fix_width)
         prebuf = self.buf[self._hover_row][start_index:self._hover_col]
         self._line_offset = self.visible_width(prebuf)
 
     def fix_cursor(self):
-        self.write(ac.move2(self._hover_row - self._fix_row + 1, self._line_offset + 1))
+        self.frame.push(ac.move2(self._hover_row - self._fix_row + 1, self._line_offset + 1))
 
     def set_fpoint(self, row, width):
         self._fix_row = row
@@ -200,11 +197,11 @@ class TextEditor(BaseUI):
     def fix_up(self):
         # Remember to check if self._fix_row > 0
         self._fix_row -= 1
-        self.write(''.join([ac.move0, ac.insert1, '\r', self.get_screen_line(self._fix_row)]))
+        self.frame.push(''.join([ac.move0, ac.insert1, '\r', self.get_screen_line(self._fix_row)]))
 
     def fix_down(self):
         # Remember to check if self._fix_row +2 < len(self.buf)
-        self.write(''.join([ac.move2(self.height+1, 0), ac.kill_line,
+        self.frame.push(''.join([ac.move2(self.height+1, 0), ac.kill_line,
                             self.get_screen_line(self._fix_row + self.height), '\r\n']))
         self._fix_row += 1
 
@@ -241,14 +238,15 @@ class TextEditor(BaseUI):
             offset += self.char_width(self.buf[self._hover_row][i])
             if offset >= offset_limit :
                 break
-        self.write(''.join(buf))
+        self.frame.push(''.join(buf))
+        self.frame.fflush()
 
     def restore_screen_remain(self):
         self.restore_line_remain()
         text = self.get_text_area(self._hover_row+1, self._fix_width,
                                   self.height - 1 + self._fix_row - self._hover_row,
                                   self.page_width, buf=['\r\n', ac.clear1])
-        self.write(text)
+        self.frame.push(text)
         self.fix_cursor()
 
     def insert_char(self, char):
@@ -326,7 +324,7 @@ class TextEditor(BaseUI):
             self.merge_next_line()
         else:
             del self.buf[self._hover_row][self._hover_col:]
-            self.write(ac.kill_to_end)
+            self.frame.push(ac.kill_to_end)
 
     def kill_whole_line(self):
         self.move_beginning_of_line()
@@ -342,7 +340,7 @@ class TextEditor(BaseUI):
         tmp = self.buf[self._hover_row][self._hover_col:]
         if tmp:
             del self.buf[self._hover_row][self._hover_col:]
-            self.write(ac.kill_to_end)
+            self.frame.push(ac.kill_to_end)
 
         self.buf.insert(self._hover_row+1, tmp)
         self.move_beginning_of_line()
@@ -350,7 +348,7 @@ class TextEditor(BaseUI):
         if self._hover_row+1 == self._fix_row + self.height:
             self.move_down()
         else:
-            self.write(''.join(['\r\n', ac.insert1]))
+            self.frame.push(''.join(['\r\n', ac.insert1]))
             self.move_down()
             self.restore_line_remain()
         self.fix_cursor()
@@ -413,7 +411,7 @@ class TextEditorAreaMixIn:
         if min_row == max_row:
             # res = ''.join(self.buf[min_row][min_col:max_col])
             del self.buf[min_row][min_col:max_col]
-            self.write(''.join([ac.kill_to_end, ''.join(self.buf[min_row][min_col:])]))
+            self.frame.push(''.join([ac.kill_to_end, ''.join(self.buf[min_row][min_col:])]))
         else:
             # res = ''.join(''.join(self.buf[max_row][:max_col]),
                           # reduce(list.__add__, self.buf[min_row+1:max_row], [])

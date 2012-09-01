@@ -21,3 +21,4 @@ class BaseUI:
     def do_command(self, action):
         if action:
             getattr(self, action)()
+            self.frame.fflush()

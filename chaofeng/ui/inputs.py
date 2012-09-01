@@ -33,11 +33,12 @@ class BaseInput(BaseUI):
         return self
 
     def restore_screen(self):
-        self.frame.write(u''.join(self.buffer))
+        self.frame.push(u''.join(self.buffer))
 
     def do_command(self, command):
         if command :
             getattr(self, command)()
+            self.frame.fflush()
 
     def real_read(self):
         return self.frame.read_secret()
@@ -73,7 +74,7 @@ class BaseInput(BaseUI):
         `False` when recv a Ctrl+c.
         '''
         if prompt:
-            self.frame.write(prompt)
+            self.frame.push(prompt)
         buf = buf or []
         self.set_buf(buf)
         self.termitor = termitor
@@ -94,7 +95,7 @@ class VisableInput(BaseInput):
 
     def insert_char(self, data):
         super(VisableInput, self).insert_char(data)
-        self.frame.write(data)
+        self.frame.push(data)
         
     def acceptable(self,data):
         return data.isalnum()
@@ -102,7 +103,7 @@ class VisableInput(BaseInput):
     def delete(self):
         data = super(VisableInput, self).delete()
         if data :
-            self.frame.write(ac.backspace)
+            self.frame.push(ac.backspace)
             return data
 
     def read(self, buf=None, prompt=None, termitor=ac.ks_finish):
@@ -110,7 +111,7 @@ class VisableInput(BaseInput):
 
     def readln(self, buf=None, prompt=None, termitor=ac.ks_finish):
         res = super(VisableInput, self).read(buf, prompt, termitor)
-        self.frame.write(u'\r\n')
+        self.frame.push(u'\r\n')
         return res
     
 class EastAsiaTextInput(VisableInput):
@@ -121,14 +122,14 @@ class EastAsiaTextInput(VisableInput):
     def delete(self):
         data = super(VisableInput, self).delete() # !!! ugly but important
         if data :
-            self.frame.write(ac.srcwidth(data) * ac.backspace)
+            self.frame.push(ac.srcwidth(data) * ac.backspace)
             return data
     
 class Password(BaseInput):
 
     def insert_char(self, data):
         super(Password, self).insert_char(data)
-        self.frame.write(u'*')
+        self.frame.push(u'*')
 
     def acceptable(self,data):
         return data.isalnum()
@@ -136,7 +137,7 @@ class Password(BaseInput):
     def delete(self):
         data = super(Password, self).delete()
         if data :
-            self.frame.write(ac.backspace)
+            self.frame.push(ac.backspace)
             return data
     
     def read(self, prompt=None, termitor=ac.ks_finish):
@@ -144,7 +145,7 @@ class Password(BaseInput):
 
     def readln(self, prompt=None):
         res = super(Password, self).read(None, prompt=prompt, termitor=ac.ks_finish)
-        self.frame.write(u'\r\n')
+        self.frame.push(u'\r\n')
         return res
 
 class DatePicker(BaseInput):
@@ -166,13 +167,13 @@ class DatePicker(BaseInput):
         l = len(self.buffer)
         if  l <= 9 :
             super(DatePicker, self).insert_char(data)
-            self.frame.write(data)
+            self.frame.push(data)
             if l in self.seq_bit:
                 super(DatePicker, self).insert_char(u'-')
-                self.frame.write(u'-')
+                self.frame.push(u'-')
 
     def restore_screen(self):
-        self.frame.write(self.fetch_str())
+        self.frame.push(self.fetch_str())
 
     def fetch_str(self):
         return u''.join(self.buffer)
@@ -189,13 +190,13 @@ class DatePicker(BaseInput):
 
     def readln(self, prompt=None, buf=None):
         res = super(DatePicker, self).read(buf, prompt, termitor=ac.ks_finish)
-        self.write(u'\r\n')
+        self.push(u'\r\n')
         return res
 
     def delete(self):
         data = super(DatePicker, self).delete()
         if data:
-            self.frame.write(ac.backspace)
+            self.frame.push(ac.backspace)
             return data
 
 class ColMenu(BaseUI):
@@ -253,15 +254,15 @@ class ColMenu(BaseUI):
         return self.real[self.hover]
 
     def restore(self):
-        self.frame.write(self.background)
-        self.frame.write(self.content)
-        self.frame.write(ac.move2(*self.pos[self.hover])+u'>')
+        self.frame.push(self.background)
+        self.frame.push(self.content)
+        self.frame.push(ac.move2(*self.pos[self.hover])+u'>')
 
     def refresh_cursor(self):
-        self.frame.write(ac.backspace+u' '+ac.move2(*self.pos[self.hover])+u'>')
+        self.frame.push(ac.backspace+u' '+ac.move2(*self.pos[self.hover])+u'>')
 
     def refresh_cursor_gently(self):
-        self.frame.write((ac.move2(self.pos[self.hover][0], self.pos[self.hover][1]+1)))
+        self.frame.push((ac.move2(self.pos[self.hover][0], self.pos[self.hover][1]+1)))
 
     def send_shortcuts(self,data):
         if data in self.shortcuts :
@@ -338,9 +339,9 @@ class BaseSelectUI(BaseUI):
         raise NotImplementedError(self)
 
     def restore_screen(self):
-        self.frame.write(ac.clear)
-        self.frame.write(self._background)
-        self.frame.write(self._content)
+        self.frame.push(ac.clear)
+        self.frame.push(self._background)
+        self.frame.push(self._content)
 
     def push(self, char):
         if char :
@@ -430,11 +431,11 @@ class Form(BaseUI):
         if default is None:
             default = {}
         for name,text,handler in self.data :
-            self.frame.write(''.join((ac.move2(self.start_line, 1),
+            self.frame.push(''.join((ac.move2(self.start_line, 1),
                                       ac.kill_line_n(self.height),
                                       ac.move2(self.start_line, 1), text)))
             while True:
-                self.frame.write(''.join([ac.move2(self.start_line + self.height, 1),
+                self.frame.push(''.join([ac.move2(self.start_line + self.height, 1),
                                          ac.kill_line]))
                 value = self.readline(default.get(name))
                 if value is False:
@@ -442,7 +443,7 @@ class Form(BaseUI):
                 try:
                     value = handler(value)
                 except ValueError as e:
-                    self.frame.write('%s%s\r\n' % (ac.move2(self.msg_line, 1), e.message))
+                    self.frame.push('%s%s\r\n' % (ac.move2(self.msg_line, 1), e.message))
                 else:
                     default[name] = value
                     break
@@ -456,13 +457,13 @@ class Form(BaseUI):
             buf = []
         else:
             buf = list(prefix)
-            self.frame.write(prefix)
+            self.frame.push(prefix)
         while True:
             char = self.frame.read_secret()
             if char in ac.ks_delete :
                 if buf :
                     data = buf.pop()
-                    self.frame.write(ac.backspace * ac.srcwidth(data))
+                    self.frame.push(ac.backspace * ac.srcwidth(data))
                     continue
             elif char in finish :
                 return u''.join(buf)
@@ -471,5 +472,5 @@ class Form(BaseUI):
             elif acceptable(char):
                 if len(buf) < buf_size:
                     buf.append(char)
-                    self.frame.write(char)
+                    self.frame.push(char)
         return u''.join(buf)
