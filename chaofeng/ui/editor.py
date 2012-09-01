@@ -239,7 +239,6 @@ class TextEditor(BaseUI):
             if offset >= offset_limit :
                 break
         self.frame.push(''.join(buf))
-        self.frame.fflush()
 
     def restore_screen_remain(self):
         self.restore_line_remain()
