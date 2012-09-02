@@ -292,6 +292,9 @@ def p(x):
 def srcwidth(x):
     # print ('x',x)
     return 2 if east_asian_width(x) in "FAW" else 1
+def pice_width(p):
+    return reduce(lambda x,y : x + srcwidth(y),
+                  p, 0)
 
 is_gbk_zh = lambda d : '\x80' < d < '\xff'
 
