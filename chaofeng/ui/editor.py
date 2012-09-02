@@ -11,6 +11,8 @@ class TextEditor(BaseUI):
 
     esc = unicode(ac.green + '*' + ac.reset)
 
+    ESCAPE_LINE = '\r\n'
+
     like_emacs_hotkeys = {
         ac.k_left:"move_left",
         ac.k_right:"move_right",                ac.k_ctrl_v:"move_right",
@@ -46,7 +48,7 @@ class TextEditor(BaseUI):
             if isinstance(text, list) :
                 self.buf = text[:]
             else:
-                self.buf = map(list, text.split('\r\n')) + []
+                self.buf = map(list, text.split(self.ESCAPE_LINE)) + []
                 for l in range(len(self.buf)) :
                     for r in range(len(self.buf[l])) :
                         if self.buf[l][r] == ac.esc:
