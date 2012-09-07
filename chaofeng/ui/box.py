@@ -15,20 +15,28 @@ class Animation(BaseTextBox):
     data :: [ (text, time) ... ]
     '''
 
-    def init(self, data, start_line, pause=None, callback=None):
+    def init(self, data, start_line, pause=None, callback=None, fix_pos=None):
         self.data = data
         self.len = len(self.data)
         self.start_line = start_line
         self.pause = pause
         self.callback = callback
+        if fix_pos :
+            self.fix_pos = fix_pos
+            self.write = self.write_fix_pos
 
     def write(self, data):
-        self.frame.write(''.join((ac.save,
-                                  ac.move2(self.start_line, 1),
+        self.frame.push(''.join((ac.move2(self.start_line, 1),
                                   data,
-                                  ac.reset,
-                                  ac.restore)))
-        
+                                  ac.reset)))
+
+    def write_fix_pos(self, data):
+        x, y = self.fix_pos()
+        self.frame.write(''.join([ac.move2(self.start_line, 1),
+                                 data,
+                                 ac.reset,
+                                 ac.move2(x, y)]))
+
     def prepare(self, playone=False):
         if playone:
             self.gener = iter(self.data)
@@ -38,6 +46,9 @@ class Animation(BaseTextBox):
     def clear(self):
         if hasattr(self,'thread') :
             self.thread.kill()
+
+    def hook(self):
+        pass
 
     def goto_one(self):
         while True:
@@ -162,8 +173,15 @@ class SimpleTextBox(BaseTextBox):
         else:
             return self.buf[f:t]
 
+    def get_all_split(self):
+        return self.buf
+
     def fix_bottom(self):
         pass
+
+    def reset_text(self, text, start_line):
+        self.buf = text.splitlines()
+        self.s = start_line
 
     def set_start(self,start):
         if start == self.s:
@@ -191,6 +209,9 @@ class SimpleTextBox(BaseTextBox):
             self.set_start(self.s-1)
         else:
             self.callback(False)
+
+    def is_last(self):
+        return self.s + self.h >= self.len
             
     def move_down(self):
         if self.s + self.h < self.len:
@@ -334,6 +355,14 @@ class PagedTable(BaseUI):
     seq_lines = '\r\n' + ac.kill_line
     empty_line = '\r\n' + ac.kill_line
 
+    def push_frame(self, data):
+        self.frame.push(data)
+
+    def push_quite(self, data):
+        pass
+
+    push = push_frame
+
     def init(self, loader, formater, start_num, start_line, height=20):
         '''
         start_num >= 0
@@ -342,7 +371,9 @@ class PagedTable(BaseUI):
         self.start_line = start_line
         self.loader = loader
         self.formater = formater
+        self.setup(start_num)
 
+    def setup(self, start_num):
         if start_num < 0 : start_num = 0
         r = start_num % self.height
         try:
@@ -359,22 +390,26 @@ class PagedTable(BaseUI):
         else : return False
 
     def restore_cursor_gently(self):
-        self.frame.push(u'%s>' % ac.move2(self.start_line + self.hover, 1))
+        self.push(u'%s>' % ac.move2(self.start_line + self.hover, 1))
 
     def _fix_cursor(self):
-        self.frame.push('%s %s>' % (ac.movex_d,
-                                     ac.move2(self.start_line + self.hover, 1)))
+        self.push('%s %s>' % (ac.movex_d,
+                              ac.move2(self.start_line + self.hover, 1)))
+
+    def _load_data(self, data, start_num):
+        self.data = data
+        self.start_num = start_num
+        self.wrapper_data = [ self.formater(x) for x in self.data]
+        self.index_limit = len(self.data)
+        self._screen = ''.join([ac.move2(self.start_line, 1), ac.kill_line, 
+                                self.seq_lines.join(self.wrapper_data),
+                                self.empty_line*(self.height -
+                                                 self.index_limit)])
 
     def load_data(self, start_num):
         data = self.loader(start_num, self.height)
         if data :
-            self.data = data
-            self.start_num = start_num
-            self.wrapper_data = [ self.formater(x) for x in self.data]
-            self.index_limit = len(self.data)
-            self._screen = ''.join([ac.move2(self.start_line, 1), ac.kill_line, 
-                                    self.seq_lines.join(self.wrapper_data),
-                                    self.empty_line*(self.height - self.index_limit)])
+            self._load_data(data, start_num)
         else:
             raise TableLoadNoDataError
 
@@ -389,12 +424,15 @@ class PagedTable(BaseUI):
             return True
 
     def restore_screen(self):
-        self.frame.push(self._screen)
+        self.push(self._screen)
         self.restore_cursor_gently()
         
     def page_up(self):
         if self.safe_load_data(self.start_num - self.height) :
             self.restore_screen()
+        else:
+            self.hover = self.start_num
+            self._fix_cursor()
 
     def page_down(self):
         if self.safe_load_data(self.start_num + self.height) :
@@ -434,6 +472,14 @@ class PagedTable(BaseUI):
         else:
             self.goto_first()
 
+    def goto_quite(self, num):
+        self.push = self.push_quite
+        try:
+            res = self.goto(num)
+        finally:
+            self.push = self.push_frame
+            return res
+
     def goto_first(self):
         if self.safe_load_data(0) :
             self.hover = 0
@@ -447,9 +493,9 @@ class PagedTable(BaseUI):
 
     def set_hover_data(self, data):
         self.data[self.hover] = data
-        self.frame.push(''.join(('\r',
-                                  ac.kill_line,
-                                  self.formater(data))))
+        self.push(''.join(('\r',
+                           ac.kill_line,
+                           self.formater(data))))
         self.restore_cursor_gently()
 
     def is_empty(self):
@@ -462,13 +508,22 @@ class PagedTable(BaseUI):
 
 class FinitePagedTable(PagedTable):
 
-    def init(self, loader, formater, get_last, start_num, start_line, height=20):
-        self.get_last = get_last
+    def init(self, loader, formater, counter, start_num,
+             start_line, height=20):
+        self.counter = counter
         super(FinitePagedTable, self).init(loader, formater, start_num,
                                            start_line, height)
 
+    def reset_load(self, loader, counter, start_num):
+        data = loader(start_num, self.height)
+        if data :
+            self._load_data(data, start_num)
+        else:
+            raise NullValueError
+        self.counter = counter
+
     def goto_last(self):
-        last = self.get_last()
+        last = self.counter() - 1
         self.goto(last)
 
     def move_up(self):

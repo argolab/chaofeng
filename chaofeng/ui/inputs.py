@@ -253,16 +253,29 @@ class ColMenu(BaseUI):
     def fetch(self):
         return self.real[self.hover]
 
+    def fetch_num(self):
+        return self.hover
+    
+    def fetch_lastnum(self):
+        return self.len - 1
+
+    def get_real(self, hover):
+        return self.real[hover]
+
     def restore(self):
         self.frame.push(self.background)
         self.frame.push(self.content)
         self.frame.push(ac.move2(*self.pos[self.hover])+u'>')
 
-    def refresh_cursor(self):
+    def restore_cursor(self):
         self.frame.push(ac.backspace+u' '+ac.move2(*self.pos[self.hover])+u'>')
 
-    def refresh_cursor_gently(self):
-        self.frame.push((ac.move2(self.pos[self.hover][0], self.pos[self.hover][1]+1)))
+    def restore_cursor_gently(self):
+        self.frame.push((ac.move2(self.pos[self.hover][0],
+                                  self.pos[self.hover][1]+1)))
+
+    def get_cursor_pos(self):
+        return self.pos[self.hover][0], self.pos[self.hover][1] + 1
 
     def send_shortcuts(self,data):
         if data in self.shortcuts :
@@ -279,21 +292,21 @@ class ColMenu(BaseUI):
             self.hover += 1
         else:
             self.hover = 0
-        self.refresh_cursor()
+        self.restore_cursor()
 
     def move_up(self):
         if self.hover > 0 :
             self.hover -= 1
         else:
             self.hover = self.len - 1
-        self.refresh_cursor()
+        self.restore_cursor()
 
     def move_left(self):
         if self.height :
             next_s = self.hover - self.height
             if next_s >= 0 :
                 self.hover = next_s
-                self.refresh_cursor()
+                self.restore_cursor()
                 return True
 
     def move_right(self):
@@ -301,20 +314,20 @@ class ColMenu(BaseUI):
             next_s = self.hover + self.height
             if next_s < self.len :
                 self.hover = next_s
-                self.refresh_cursor()
+                self.restore_cursor()
                 return True
 
     def move_to(self,which):
         self.hover = which
-        self.refresh_cursor()
+        self.restore_cursor()
 
     def goto_first(self):
         self.hover = 0
-        self.refresh_cursor()
+        self.restore_cursor()
 
     def goto_last(self):
         self.hover = self.len - 1
-        self.refresh_cursor()
+        self.restore_cursor()
 
 class BaseSelectUI(BaseUI):
 

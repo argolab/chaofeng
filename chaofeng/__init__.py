@@ -21,4 +21,5 @@ from eventlet import spawn as launch
 from chaofeng import ascii
 from chaofeng import ui
 from chaofeng import g
-from .bbs import Session, Server, Frame, EndInterrupt, asynchronous
+from .bbs import Session, Server, Frame, EndInterrupt, asynchronous,\
+    PluginHolder

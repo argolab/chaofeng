@@ -65,9 +65,10 @@ class TextEditor(BaseUI):
         self.restore_screen()
         
     def fetch_all(self):
-        return '\r\n'.join(''.join(line) for line in self.buf)
+        return self.ESCAPE_LINE.join(''.join(line) for line in self.buf)
 
     def fetch_lines(self):
+        print 'buf', self.buf
         return [''.join(line) for line in self.buf]
 
     def char_width(self, char):

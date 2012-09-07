@@ -305,6 +305,15 @@ for c in range(ord('a'), ord('z')+1):
     if k_cp(cc) not in dd:
         dd[k_cp(cc)] = '^%s' % cc.upper()
 
+k_finish = '\n'
+
+KEY_FINISH = {
+    '\n':k_finish,
+    '\r\n':k_finish,
+    '\r':k_finish,
+    '\r\x00':k_finish,
+    }
+
 KEY_PCManX = {
     '\x1bOA':k_up,
     '\x1bOB':k_down,
@@ -354,6 +363,7 @@ for k,v in dd.items():
             ASCII_MAP[unicode(v)] = unicode(k)
 
 CC['\x1b'] = u'\x1b\0'
+CC.update(KEY_FINISH)
 CC.update(KEY_PCManX)
 CC.update(KEY_GNOME_TERM)
 CC.update(KEY_CTerm)

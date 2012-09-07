@@ -97,6 +97,9 @@ class Session:
         ''' Like dict[name] = value. '''
         self._dict[name] = value
 
+    def pop(self, name, argv=None):
+        return self._dict.pop(name, argv)
+
     def set_charset(self,codecs):
         ''' Set the charset attribute. '''
         self.charset = codecs
@@ -150,6 +153,7 @@ class Frame:
         if self._buffer:
             self.fflush()
         char = self.stream.next()
+        print 'bb', repr(char)
         if char == ascii.esc:
             buf = [char]
             tree = ascii.ascii_tree[char]
@@ -209,7 +213,12 @@ class Frame:
             self.fflush()
 
     def fflush(self):
-        self.sock.send(''.join(self._buffer))
+        try:
+            self.sock.send(''.join(self._buffer))
+        except socket.error as e:
+            # print (self, e)
+            # traceback.print_exc()
+            self.close()
         self._buffer = []
 
     def write(self,data):
@@ -243,6 +252,9 @@ class Frame:
         '''
         pass
 
+    def leave(self):
+        pass
+
     def interrupt(self, e):
         pass
 
@@ -265,6 +277,7 @@ class Frame:
     def raw_goto(self,where,*args,**kwargs):
         self._clear()
         self.clear()
+        self.leave()
         raise GotoInterrupt(where,args,kwargs)
 
     def goto(self,where_mark,*args,**kwargs):
@@ -273,11 +286,13 @@ class Frame:
     def wakeup(self,frame):
         self._clear()
         self.clear()
+        self.leave()
         raise WakeupInterrupt(frame)
 
     def close(self):
         for s in self._subframe : s.clear()
         for u in self._loading : u.clear()
+        self.leave()
         raise EndInterrupt
 
     def u(self,s):
@@ -405,3 +420,37 @@ def asynchronous(f):
 #                 raise AsyncTimeLimitError
 #         return wrapper
 #     return _
+
+class PluginHolder:
+
+    def __init__(self, hookname=None):
+        if hookname :
+            self._hook = dict( (name, []) for name in hookname)
+        else:
+            self._hook = []
+        self._action = {}
+        
+    def add_action(self, name):
+        def mark_inner(f):
+            self._action[name] = f
+            return f
+        return mark_inner
+
+    def do_action_ifex(self, name, frame):
+        if name in self._action:
+            self._action[name](frame)
+
+    def hook_up(self, hookname):
+        def mark_inner(f):
+            try:
+                self._hook[hookname].append(f)
+            except KeyError:
+                raise ValueError(u'No such hook `%s` ' % hookname)
+            return f
+        return mark_inner
+
+    def get_all_hook(self, hookname):
+        try:
+            return self._hook[hookname]
+        except KeyError:
+            raise ValueError(u'No such hook `%s`' % hookname)
