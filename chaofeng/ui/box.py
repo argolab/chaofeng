@@ -156,7 +156,7 @@ class SimpleTextBox(BaseTextBox):
         self.buf = text.splitlines()
         self.s = 0
         self.len = len(self.buf)
-        self.max = max(0,self.len - self.h)
+        self.max = max(0, self.len - self.h)
 
     reset = set_text
 
