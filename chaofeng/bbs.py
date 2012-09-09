@@ -153,7 +153,6 @@ class Frame:
         if self._buffer:
             self.fflush()
         char = self.stream.next()
-        print 'bb', repr(char)
         if char == ascii.esc:
             buf = [char]
             tree = ascii.ascii_tree[char]
