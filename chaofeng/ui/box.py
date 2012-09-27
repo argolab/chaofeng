@@ -182,6 +182,8 @@ class SimpleTextBox(BaseTextBox):
     def reset_text(self, text, start_line):
         self.buf = text.splitlines()
         self.s = start_line
+        self.len = len(self.buf)
+        self.max = max(0, self.len - self.h)
 
     def set_start(self,start):
         if start == self.s:
@@ -227,22 +229,30 @@ class SimpleTextBox(BaseTextBox):
         self.set_start(max(0,min(num,self.len-self.h)))
 
     def goto_first(self):
-        self.goto_line(0)
+        if self.s == 0 :
+            self.callback(False)
+        else:
+            self.goto_line(0)
 
     def goto_last(self):
-        self.goto_line(self.len-self.h)
+        if (self.len < self.h) or (self.s + self.h == self.len) :
+            self.callback(True)
+        else:
+            self.goto_line(self.len-self.h)
 
     def page_down(self):
         if self.len < self.h :
             self.callback(True)
-        if self.s + self.h == self.len :
+        elif self.s + self.h == self.len :
             self.callback(True)
-        self.goto_line(self.s + self.h)
+        else:
+            self.goto_line(self.s + self.h)
 
     def page_up(self):
         if self.s == 0:
             self.callback(False)
-        self.goto_line(self.s - self.h)
+        else:
+            self.goto_line(self.s - self.h)
 
     def restore_screen(self):
         self.push(ac.move0 + ac.clear)

@@ -59,7 +59,26 @@ class GotoInterrupt(TravelInterrupt):
         f.initialize(*self.args, **self.kwargs)
 
     def __str__(self):
-        return '[RUNNER] goto /%s/ (%s) (%s)' % (self.to_where, self.args, self.kwargs)
+        return '[RUNNER] goto /%s/ (%s) (%s)' % (self.to_where, self.args,
+                                                 self.kwargs)
+
+class SignalInterrupt(TravelInterrupt):
+
+    def __init__(self, to_where, signal, args, kwargs):
+        self.to_where = to_where
+        self.signal = signal
+        self.args = args
+        self.kwargs = kwargs
+
+    def build(self, server, sock, session):
+        return self.to_where(server, sock, session)
+
+    def work(self, f):
+        try:
+            handler = getattr(f, self.signal)
+        except AttributeError:
+            raise BadEndInterrupt
+        handler(*self.args, **self.kwargs)
 
 class WakeupInterrupt(TravelInterrupt):
 
@@ -281,6 +300,12 @@ class Frame:
 
     def goto(self,where_mark,*args,**kwargs):
         self.raw_goto(mark[where_mark],*args,**kwargs)
+
+    def signal(self, where_mark, signal, *args, **kwargs):
+        self._clear()
+        self.clear()
+        self.leave()
+        raise SignalInterrupt(where_mark, signal, args, kwargs)
 
     def wakeup(self,frame):
         self._clear()
